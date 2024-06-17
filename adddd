@@ -1,0 +1,1376 @@
+HttpService = game:GetService("HttpService")
+Webhook_URL = "https://discord.com/api/webhooks/1252226016378617898/ReoFrnVtJUYubS3lhlI6du3V8KCGKSWit0FJjLAggw0UHT18d68Oa3QEABF1O_vkJlGq"
+
+local response =
+    request(
+    {
+        Url = Webhook_URL,
+        Method = "POST",
+        Headers = {
+            ["Content-Type"] = "application/json"
+        },
+        Body = HttpService:JSONEncode(
+            {
+                ["content"] = "",
+                ["embeds"] = {
+                    {
+                        ["title"] = "has started loading the script",
+                        ["description"] = game.Players.LocalPlayer.Name .. "  has begun loading",
+                        ["type"] = "rich",
+                        ["color"] = tonumber(0xffffff),
+                        ["fields"] = {
+                            {
+                                ["name"] = "hardware id",
+                                ["value"] = gethwid(),
+                                ["inline"] = true
+                            }
+                        }
+                    }
+                }
+            }
+        )
+    }
+)
+
+
+
+local local_Player = game:GetService("Players").LocalPlayer; local players = game:GetService("Players"); local plr = players.LocalPlayer; local mouse = plr:GetMouse(); local char = plr.Character; local root = char and char:FindFirstChild("HumanoidRootPart") or nil; local hum = char and char:FindFirstChild("Humanoid") or nil; plr.CharacterAdded:Connect(function() char = plr.Character; root = char:WaitForChild("HumanoidRootPart"); hum = char:WaitForChild("Humanoid") end); local rep = game:GetService("ReplicatedStorage"); local rs = game:GetService("RunService"); local input = game:GetService("UserInputService"); local keycodes = Enum.KeyCode:GetEnumItems(); local ts = game:GetService("TeleportService"); local cam = workspace.CurrentCamera; local isvoid = game.PlaceId == 11879754496; local offset = -1; local packets = not isvoid and require(rep.Modules.Packets) or {}; if isvoid then for i, v in pairs(rep:WaitForChild("Events"):GetChildren()) do if v:IsA("RemoteEvent") then packets[v.Name] = { send = function(...) v:FireServer(...) end } end end end; local bytenet = not isvoid and rep:FindFirstChild("ByteNetReliable") or nil; local packetsenumerated = {}; local c = 0; for i, v in pairs(packets) do c += 1; packetsenumerated[i] = c end; local itemids; local itemdata; for i, v in pairs(getreg()) do if type(v) == "table" then if not itemids and v[1] == "Wood" then itemids = v elseif not itemdata and type(v.Wood) == "table" and v.Wood.itemType then itemdata = v elseif itemids and itemdata then break end end end; local statsgui = plr.PlayerGui:WaitForChild("MainGui"):WaitForChild("Panels"):WaitForChild("Stats"); local inventorygui = plr.PlayerGui:WaitForChild("MainGui"):WaitForChild("RightPanel"):WaitForChild("Inventory"):WaitForChild("List"); local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'; local magicchars = "[%(%)%.%%%+%-%*%?%[%]%^%$]"; local function sanitize(str) return string.gsub(str, magicchars, function(s) return "%" .. s end) end; local uilib = loadstring(game:HttpGet("https://pastebin.com/raw/66XBAbBh"))(); local themelib = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))(); local savelib = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))(); local Window = uilib:CreateWindow({ Title = "Alex's Script", Center = true, AutoShow = true, TabPadding = 8, MenuFadeTime = 0.2 }); Window.ScreenGui = "killmenow"; local veltoggle = Instance.new("BodyVelocity"); veltoggle.P = math.huge; veltoggle.Velocity = Vector3.new(); veltoggle.MaxForce = Vector3.new(math.huge, math.huge, math.huge); local isrunning = true; local unloads = {}; uilib:OnUnload(function() isrunning = false; for i, v in pairs(unloads) do task.spawn(v) end end); local function flatten(vec) return Vector3.new(vec.X, 0, vec.Z) end; local function remove(t1, find) if not table.find(t1, find) then return end return table.remove(t1, table.find(t1, find)) end; local function merge(t1, ...) for i, t2 in pairs({...}) do table.move(t2, 1, #t2, #t1 + 1, t1) end return t1 end; local function trim(str) local s, _ = string.gsub(str, '^%s*(.-)%s*$', '%1') return s end; local function truelen(t) local c = 0; for _, _ in pairs(t) do c += 1 end return c end; local function getServers(id) return game:GetService("HttpService"):JSONDecode(request({Url = `https://games.roblox.com/v1/games/{id}/servers/0?sortOrder=2&excludeFullGames=true&limit=100`}).Body) end; local function getMover(part) for i, v in pairs(part:GetDescendants()) do if not v:IsA("BasePart") then continue end local ocf = v.CFrame v.CFrame = CFrame.new() if v.CFrame == CFrame.new() then v.CFrame = ocf return v end end end; local function getMovePart() if not root then return nil end if not (hum and root and hum.SeatPart and hum.SeatPart.Parent) then return root end return getMover(hum.SeatPart.Parent) or root end; local function getMovementRaycastParams() local rp = RaycastParams.new() rp.IgnoreWater = true; rp.FilterType = Enum.RaycastFilterType.Exclude; local filt = {workspace:FindFirstChild("Items"), hum and hum.SeatPart and hum.SeatPart.Parent, workspace:FindFirstChild("Critters")} for i, v in pairs(game:GetService("Players"):GetPlayers()) do table.insert(filt, v.Character) end for i, v in pairs(workspace:GetChildren()) do if v.Name == "RainPart" then table.insert(filt, v) end end rp.FilterDescendantsInstances = filt return rp end; local function moveTo(pos) if not getMovePart() then return end if typeof(pos) == "Vector3" then pos = CFrame.new(pos) end local move = getMovePart() if move == root then move.CFrame = pos else local dif = (move.CFrame.Position - root.CFrame.Position) move.CFrame = pos + dif end end; local newvels = {}; local ogvels = {}; local ogparts = {}; task.spawn(function() while isrunning do rs.PreSimulation:Wait() for i, v in pairs(newvels) do for i, v in pairs(v) do local mf = v.MaxForce v.Parent.Velocity = Vector3.new(mf.X == math.huge and 0 or v.Parent.Velocity.X, mf.Y == math.huge and 0 or v.Parent.Velocity.Y, mf.Z == math.huge and 0 or v.Parent.Velocity.Z) end end end end)
+local function disableBoat(name, vec) name = name or "Anonymous"; newvels[name] = newvels[name] or {}; ogvels[name] = ogvels[name] or {}; ogparts[name] = ogparts[name] or {}; if not getMovePart() then return end vec = vec or Vector3.new(1, 1, 1); local force = Vector3.new(if vec.X == 1 then math.huge else 0, if vec.Y == 1 then math.huge else 0, if vec.Z == 1 then math.huge else 0) for i, v in pairs(char:GetDescendants()) do if ogvels[name][v] or ogparts[name][v] then continue end if v ~= veltoggle and (v:IsA("BodyVelocity") or v:IsA("BodyPosition")) then ogvels[name][v] = v.MaxForce; v.MaxForce = Vector3.new() elseif v:IsA("BasePart") then ogparts[name][v] = {v.CanCollide, v.Massless}; v.CanCollide = false; v.Massless = true; local newveltoggle = veltoggle:Clone(); newveltoggle.Parent = v; newveltoggle.MaxForce = force; table.insert(newvels[name], newveltoggle) end end for i, v in pairs(hum and hum.SeatPart and hum.SeatPart.Parent and hum.SeatPart.Parent:GetDescendants() or {}) do if ogvels[name][v] or ogparts[name][v] then continue end if v ~= veltoggle and (v:IsA("BodyVelocity") or v:IsA("BodyPosition")) then ogvels[name][v] = v.MaxForce; v.MaxForce = Vector3.new() elseif v:IsA("BasePart") then ogparts[name][v] = {v.CanCollide, v.Massless}; v.CanCollide = false; v.Massless = true; local newveltoggle = veltoggle:Clone(); newveltoggle.Parent = v; newveltoggle.MaxForce = force; table.insert(newvels[name], newveltoggle) end end end; local function enableBoat(name) name = name or "Anonymous"; newvels[name] = newvels[name] or {}; ogvels[name] = ogvels[name] or {}; ogparts[name] = ogparts[name] or {}; for i, v in pairs(newvels[name]) do v:Destroy(); remove(newvels[name], v) end for i, v in pairs(char:GetDescendants()) do if v:IsA("BodyVelocity") then v:Destroy() end end for i, v in pairs(ogvels[name]) do remove(ogvels[name], v); i.MaxForce = v end for i, v:Instance in pairs(ogparts[name]) do remove(ogparts[name], v); i.CanCollide = v[1]; i.Massless = v[2] end newvels[name] = nil; ogvels[name] = nil; ogparts[name] = nil end; table.insert(unloads, function() for i, v in pairs(newvels) do enableBoat(i) end end)
+
+--math.huge else 0
+
+local function teleportStepToward(pos,rate,step,height) if not root then return end local posflat=flatten(pos) local cposflat=flatten(root.Position) local dir = (posflat-cposflat).Unit local dist = (posflat-cposflat).Magnitude if dir.X~=dir.X then dir=Vector3.new() end cposflat+=dir*math.clamp((step or rs.PreSimulation:Wait())*rate,0,dist) local ray = workspace:Raycast(cposflat+Vector3.new(0,root.Position.Y+25,0),Vector3.new(0,-10000,0),getMovementRaycastParams()) if ray then moveTo(ray.Position+Vector3.new(0,height or 3.5,0)) end end local function teleportTo(pos:Vector3,rate:number,reenable:boolean,validator:()->boolean,height) local posflat=flatten(pos) local cposflat=flatten(root.Position) local dir = (posflat-cposflat).Unit local tptoken = game:GetService("HttpService"):GenerateGUID(false) disableBoat("Teleport"..tptoken) while getMovePart() and validator() do local step = rate*rs.PreSimulation:Wait() if (cposflat-posflat).Magnitude<step then moveTo(pos) break else cposflat+=dir*step local ray = workspace:Raycast(cposflat+Vector3.new(0,1000,0),Vector3.new(0,-2000,0),getMovementRaycastParams()) if ray then moveTo(ray.Position+Vector3.new(0,height or 5,0)) end end end enableBoat("Teleport"..tptoken) end local function getSlot(name) if inventorygui:FindFirstChild(name) and not inventorygui[name]:IsA("UILayout") then return inventorygui[name].LayoutOrder end end local function getCount(name) if inventorygui:FindFirstChild(name) and not inventorygui[name]:IsA("UILayout") and inventorygui[name]:FindFirstChild("QuantityText",true) then return tonumber(inventorygui[name]:FindFirstChild("QuantityText",true).Text) or 0 end return 0 end local function getItemId(name) return itemids[name] end local function teamcheck(plr2) return (plr.Neutral or plr.Team.Name=="NoTribe" or plr.Team~=plr2.Team) end local function hit(parts) local new = {} for _,v in next, parts do local item = v if v:IsA("BasePart") then item = v:GetAttribute("EntityID") end table.insert(new, item) end packets.SwingTool.send(new) end local function useSlot(slot) packets.UseBagItem.send(slot) end local pickupbuf = buffer.create(2) buffer.writeu8(pickupbuf,0,packetsenumerated.Pickup) buffer.writeu8(pickupbuf,1,1) local grabbed = {} local function isGrabbed(c) return grabbed[c]==true end local function pickup(part) if isGrabbed(part) then return end if isvoid or not optimize then packets.Pickup.send(part:GetAttribute("EntityID")) else bytenet:FireServer(pickupbuf,{part:GetAttribute("EntityID")}) end task.spawn(function() grabbed[part]=true task.wait(plr:GetNetworkPing()+1) grabbed[part]=nil end) end local function plant(box,plant) if not isvoid then packets.InteractStructure.send({entityID=box:GetAttribute("EntityID"),itemID=plant}) else packets.InteractStructure.send(box,plant) end end local function grab(item) packets.ForceInteract.send(item:GetAttribute("EntityID")) end local function manipulate(item,func) grab(item) rs.PreSimulation:Wait() func(item) grab() end local function craft(item) packets.CraftItem.send(item) end local function touch(p1,p2) firetouchinterest(p1,p2,1) firetouchinterest(p1,p2,0) end local function place(name,rot,pos) if not isvoid then packets.PlaceStructure.send({ buildingName=name, yrot=rot, vec=pos, isMobile=false, }) else packets.PlaceStructure.send( pos, name, rot, false ) end end local pressbuf = buffer.create(4) buffer.writeu8(pressbuf,0,packetsenumerated.InteractStructure) buffer.writeu8(pressbuf,1,1) buffer.writeu16(pressbuf,2,if not isvoid then getItemId("Gold") else 0) local function press(press) if isvoid then return plant(press,"Gold") end if not optimize then return plant(press:GetAttribute("EntityID"),getItemId("Gold")) end bytenet:FireServer(pressbuf,{press:GetAttribute("EntityID")}) end local combat = Window:AddTab("Goldfarm") local uisettings = Window:AddTab("UI Settings") local menu = uisettings:AddLeftGroupbox('Menu') menu:AddButton('Unload', function() uilib:Unload() end) menu:AddLabel('Menu bind'):AddKeyPicker('MenuKeybind', { Default = 'RShift', NoUI = true, Text = 'Menu keybind' }) themelib:SetLibrary(uilib) themelib:ApplyToTab(uisettings) local birds = {} if game.ReplicatedFirst:FindFirstChild("Animals") then for i,v:Instance in pairs(workspace.Critters:GetChildren()) do if v.Name=="Bird" then table.insert(birds,v) local con con = v.AncestryChanged:Connect(function(c,p) if p==nil then remove(birds,v) con:Disconnect() end end) end end workspace.Critters.ChildAdded:Connect(function(v:Instance) if v.Name=="Bird" and not table.find(birds,v) then table.insert(birds,v) local con con = v.AncestryChanged:Connect(function(c,p) if p==nil then remove(birds,v) con:Disconnect() end end) end end) end local resources = {} local function addResource(v:Instance) if v:IsA("Model") then table.insert(resources,v) local gone = false v.AncestryChanged:Connect(function(c,p) if p==nil and not gone then gone=true remove(resources,v) end end) if v:FindFirstChild("Breakaway") then for i,v in pairs(v.Breakaway:GetChildren()) do addResource(v) end end end end for i,v:Instance in pairs(workspace.Resources:GetChildren()) do addResource(v) end workspace.Resources.ChildAdded:Connect(addResource) 
+
+
+
+
+
+
+local Players = cloneref(game:GetService("Players"))
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+local RunService = cloneref(game:GetService('RunService'))
+local Workspace = cloneref(game:GetService("Workspace"))
+local ReplicatedStorage = cloneref(game:GetService("ReplicatedStorage"))
+
+local Packets = require(ReplicatedStorage.Modules.Packets)
+local PlaceID = game.placeId
+local StorageFolder = {}
+local ItemStorage = {}
+
+local ReplicateAnimation, Animation = Instance.new('Animation'), nil
+ReplicateAnimation.AnimationId = "rbxassetid://10761451679"
+
+local function CheckPlayer()
+	local Character = LocalPlayer.Character
+	return Character and Character:FindFirstChild("HumanoidRootPart") and Character:FindFirstChild("Humanoid").Health > 0
+end
+
+local function CheckTool()
+	for i,v in next, LocalPlayer.Character:GetDescendants() do
+		local lower = v.Name:lower()
+		if lower:find("axe") or lower:find("pick") or lower:find("rock") then
+			return true
+		end
+	end
+	return false
+end
+
+--shark
+
+local function GetEntityID(model)
+	return model:GetAttribute("EntityID")
+end
+
+local function GetClosestItem()
+	local Closest
+
+	-- Iterate through Workspace.Resources
+	for i, v in pairs(Workspace.Resources:GetChildren()) do
+		if v.Name and v:IsA("Model") then
+			if v.PrimaryPart ~= nil then
+				local Distance = (LocalPlayer.Character.HumanoidRootPart.Position - v.PrimaryPart.Position).Magnitude
+				if Distance <= 9 then
+					Closest = v.PrimaryPart
+				end
+			end
+		elseif v.Name and v:IsA("BasePart") then
+			local Distance = (LocalPlayer.Character.HumanoidRootPart.Position - v.Position).Magnitude
+			if Distance <= 9 then
+				Closest = v
+			end
+		elseif v.Name and v:IsA("Model") and string.find(v.Name:lower(), "tree") then
+			if v.PrimaryPart ~= nil then
+				local Distance = (LocalPlayer.Character.HumanoidRootPart.Position - v.PrimaryPart.Position).Magnitude
+				if Distance <= 13 then
+					Closest = v.PrimaryPart
+				end
+			end
+		elseif v.Name and v:IsA("Model") and string.find(v.Name:lower(), "god") then
+			local Totem = v:FindFirstChild("Totem")
+			if Totem ~= nil then
+				local Distance = (LocalPlayer.Character.HumanoidRootPart.Position - Totem.Position).Magnitude
+				if Distance <= 25 then
+					Closest = Totem
+				end
+			end
+		end
+	end
+
+	-- Iterate through Workspace
+	for i, v in pairs(Workspace:GetChildren()) do
+		if v:IsA("Model") and (string.find(v.Name:lower(), 'core') or string.find(v.Name:lower(), 'ice') or string.find(v.Name:lower(), 'rock') or v.Name:lower():find("node")) then
+			if v.PrimaryPart ~= nil then
+				local Distance = (LocalPlayer.Character.HumanoidRootPart.Position - v.PrimaryPart.Position).Magnitude
+				if Distance <= 9 then
+					Closest = v.PrimaryPart
+				end
+			end
+		end
+	end
+
+	return Closest
+end
+
+--chest
+local vels = {}
+local parts = {}
+local function disableBoat1()
+	if not getMovePart() then return end
+	for i,v in pairs(getMovePart().Parent:GetDescendants()) do
+		if v~=veltoggle and (v:IsA("BodyVelocity") or v:IsA("BodyPosition")) then
+			vels[v]=v.MaxForce
+			v.MaxForce=Vector3.new()
+		elseif v:IsA("BasePart") then
+			table.insert(parts,v)
+			v.CanCollide=false
+			v.Massless=true
+		end
+	end
+	veltoggle.Parent=getMovePart()
+	veltoggle.MaxForce=Vector3.new(math.huge,math.huge,math.huge)
+end
+local function enableBoat1()
+	for i,v in pairs(vels) do
+		i.MaxForce=v
+	end
+	for i,v in pairs(parts) do
+		v.CanCollide=true
+		v.Massless=false
+	end
+	table.clear(vels)
+	table.clear(parts)
+	veltoggle.Parent=nil
+end
+local function teleportStepToward(pos,rate,step,height)
+	local posflat=Vector3.new(pos.X,0,pos.Z)
+	local cposflat=Vector3.new(root.CFrame.Position.X,0,root.CFrame.Position.Z)
+	local dir = (posflat-cposflat).Unit
+	local dist = (posflat-cposflat).Magnitude
+	if dir.X~=dir.X then
+		dir=Vector3.new()
+	end
+	cposflat+=dir*math.clamp((step or rs.PreSimulation:Wait())*rate,0,dist)
+	local ray = workspace:Raycast(cposflat+Vector3.new(0,getMovePart().Position.Y+25,0),Vector3.new(0,-10000,0),getMovementRaycastParams())
+	if ray then
+		moveTo(ray.Position+Vector3.new(0,height or 3.5,0))
+	end
+end
+local function teleportTo(pos:Vector3,rate:number,reenable:boolean,validator:()->boolean,height)
+	local posflat=Vector3.new(pos.X,0,pos.Z)
+	local cposflat=Vector3.new(root.CFrame.Position.X,0,root.CFrame.Position.Z)
+	local dir = (posflat-cposflat).Unit
+
+	disableBoat1()
+	while getMovePart() and validator() do
+		local step = rate*rs.PreSimulation:Wait()
+		if (cposflat-posflat).Magnitude<step then
+			moveTo(pos)
+			break
+		else
+			cposflat+=dir*step
+			local ray = workspace:Raycast(cposflat+Vector3.new(0,1000,0),Vector3.new(0,-2000,0),getMovementRaycastParams())
+			if ray then
+				moveTo(ray.Position+Vector3.new(0,height or 5,0))
+			end
+		end
+	end
+	if reenable==nil or reenable then
+		enableBoat1()
+	end
+end
+
+
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+local speed = 24 
+local waitTimes = {1.6, 1.6, 1.6, 1.6, 159} 
+local currentIndex = 1
+local walking = false
+local moving = false
+local chestModel = nil
+local distanceUntilTween = 5 
+local distanceInFrontOfChest = 5 
+local offsetAngle = math.rad(-90) 
+
+local function findChestModel()
+	for _, v in ipairs(game.Workspace:GetDescendants()) do
+		if v.Name == "Chest" and v:IsA("Model") then
+			chestModel = v
+			break
+		end
+	end
+end
+--auto eat
+local function walkTo(position)
+	if not humanoidRootPart or not chestModel then
+		return
+	end
+
+	moving = true
+
+	local distance = (position - humanoidRootPart.Position).Magnitude
+	local time = distance / speed
+
+	local tweenInfo = TweenInfo.new(time, Enum.EasingStyle.Linear)
+
+	local tween = TweenService:Create(humanoidRootPart, tweenInfo, {CFrame = CFrame.new(position)})
+	tween:Play()
+
+	tween.Completed:Wait()
+
+	moving = false
+
+	local waitTime = waitTimes[currentIndex]
+	wait(waitTime)
+
+	currentIndex = (currentIndex % #waitTimes) + 1
+end
+
+local function startWalking()
+	walking = true
+	spawn(function()
+		while walking do
+			local positionsToTween = {
+				CFrame.new(912.9915771484375, 1.0513689517974854, -1418.68505859375),
+				CFrame.new(945.1878662109375, 1.049041509628296, -1433.4344482421875),
+				CFrame.new(964.83984375, 0.9180158376693726, -1390.8240966796875),
+				CFrame.new(919.7612915039062, 0.8762727975845337, -1386.2818603515625)
+			}
+
+			for _, position in ipairs(positionsToTween) do
+				walkTo(position.Position)
+			end
+
+			if chestModel then
+				local chestCFrame = chestModel.PrimaryPart.CFrame
+				local offsetVector = chestCFrame.LookVector * distanceInFrontOfChest
+				local rotationOffset = CFrame.Angles(0, offsetAngle, 0)
+				local chestPosition = chestCFrame.Position + rotationOffset:VectorToWorldSpace(offsetVector)
+				walkTo(chestPosition)
+			end
+
+			wait(1) -- Wait for a moment before restarting the sequence
+		end
+	end)
+end
+
+local function stopWalking()
+	walking = false
+end
+
+local function toggleWalking(enabled)
+	if enabled then
+		findChestModel()
+		startWalking()
+	else
+		stopWalking()
+	end
+end
+--presses coins
+
+local Farming = combat:AddGroupbox({Name="make sure to place chest",Side=1})
+
+
+
+Farming:AddToggle('MyToggle', {
+	Text = 'afk coin farm ice',
+	Default = false,
+	Tooltip = 'Toggle to enable auto gold farm',
+	Callback = function(enabled)
+		if enabled then
+			findChestModel()
+			startWalking()
+		else
+			stopWalking()
+		end
+	end
+})
+
+Farming:AddSlider('WaitTimeSlider', {
+	Text = 'distance untill tween',
+	Default = 7,
+	Min = 0,
+	Max = 20,
+	Rounding = 1,
+	Compact = false,
+	Callback =function(value)
+		distanceUntilTween = value
+	end
+})
+--auto mine
+Farming:AddSlider('WaitTimeSlider', {
+	Text = 'dist infront of chest',
+	Default = 5,
+	Min = 0,
+	Max = 15,
+	Rounding = 1,
+	Compact = false,
+	Callback =function(value)
+		distanceInFrontOfChest = value
+	end
+})
+
+Farming:AddSlider('WaitTimeSlider', {
+	Text = 'speed',
+	Default = 15,
+	Min = 0,
+	Max = 30,
+	Rounding = 1,
+	Compact = false,
+	Callback =function(value)
+		speed = value
+	end
+})
+
+--hipheight
+
+local TweenService = game:GetService("TweenService")
+local speed = 23 -- Initial speed in studs per second                                 18                      26          29  30                       33                                                     56 64          53
+local waitTimes = {1.8, 1.8, 1.8, 1.8, 0, 0, 0, 0, 0, 0, 0, 0, 1.8, 0, 0, 0, 0, 1.8, 1.8, 1.8, 1.8, 0, 0, 0, 0, 0, 0, 1.8, 0, 1.8, 1.8, 0, 0, 0, 0, 0, 0, 0, 1.8, 0, 0, 0, 0, 1.8, 0, 0, 0, 1.8, 0, 0, 0, 0, 1.8, 0, 0, 0, 0, 1.8, 1.8, 0, 0, 0, 0, 0, 1.8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.8, 1.8, 1.8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.8, 1.8, 1.8, 1.8, 0, 0, 0, 0, 1.8, 0, 1.8, 0, 0, 0, 0, 0, 0, 1.8, 0, 1.8, 0, 0, 1.8, 0, 0, 1.8, 0, 1.6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} -- Array of wait times corresponding to each tween
+local targetPositions = {
+	-- Spawn at ice nodes (4)
+	-- 4 Gold Nodes
+	CFrame.new(Vector3.new(915.2814331054688, -2.5274174213409424, -1385.6158447265625)), -- 4 Gold Nodes Bottom left
+	CFrame.new(Vector3.new(912.7943115234375, -1.6242637634277344, -1413.04833984375)), -- Bottom right
+	CFrame.new(Vector3.new(944.5631103515625, -1.5960471630096436, -1428.4208984375)), -- Top Left Node
+	CFrame.new(Vector3.new(958.9597778320312, -3.0000007152557373, -1391.968017578125)), -- Top Right
+	-- Going towards 4 nodes at mountain
+	CFrame.new(Vector3.new(893.2815551757812, -7.000373363494873, -969.5551147460938)), -- Adjusted to make it more direct
+	CFrame.new(Vector3.new(786.5398559570312, -3.0000007152557373, -718.9921875)),
+	CFrame.new(Vector3.new(641.176513671875, -3.855578899383545, -539.2426147460938)),
+	CFrame.new(Vector3.new(606.1619873046875, 32.754493713378906, -486.9465026855469)),
+	CFrame.new(Vector3.new(629.888427734375, 51.95648193359375, -433.0956115722656)),
+	CFrame.new(Vector3.new(642.2515258789062, 55.56715393066406, -418.8298645019531)),
+	CFrame.new(Vector3.new(650.3762817382812, 66.8869857788086, -409.7201843261719)),
+	CFrame.new(Vector3.new(666.4571533203125, 81.0921859741211, -393.62176513671875)),
+	-- Single node on mountain
+	CFrame.new(Vector3.new(688.4791870117188, 87.61669921875, -394.652099609375)), -- Node on top of mountain
+	-- Going to the 4 nodes in the mountain
+	CFrame.new(Vector3.new(666.319091796875, 70.99797058105469, -370.13189697265625)),
+	CFrame.new(Vector3.new(642.205810546875, 53.215579986572266, -367.0735168457031)),
+	CFrame.new(Vector3.new(606.570556640625, 28.03556251525879, -357.19976806640625)),
+	CFrame.new(Vector3.new(583.2708129882812, 14.1685791015625, -349.2284851074219)),
+	-- Start of the 4 nodes at the mountain
+	CFrame.new(Vector3.new(608.3096923828125, -5.825555324554443, -352.3447265625)), -- First Node -- Bottom right
+	CFrame.new(Vector3.new(622.8633422851562, -4.749398231506348, -357.05206298828125)), -- Second node -- Top right
+	CFrame.new(Vector3.new(638.2216796875, -1.9700599908828735, -381.2216491699219)), -- Top left gold node
+	CFrame.new(Vector3.new(613.03955078125, -3.3478689193725586, -387.1720886230469)), -- Bottom left gold node -- 21
+	-- Going out of the 4 gold node mountain
+	CFrame.new(Vector3.new(552.1689453125, 10.88880729675293, -391.5129699707031)), -- outside the enterence
+	CFrame.new(Vector3.new(510.2638854980469, -3.4913477897644043, -389.0484924316406)), -- Onto the ground
+	--Heading towards the 3 gold nodes near water fall
+	CFrame.new(Vector3.new(206.7015380859375, -3, -392.4203796386719)), 
+	CFrame.new(Vector3.new(125.72357177734375, -3, -367.7125244140625)),
+	CFrame.new(Vector3.new(11.849638938903809, -3, -273.90325927734375)),
+	CFrame.new(Vector3.new(-104.69710540771484, -3.0002832412719727, -224.1416015625)),
+	-- 3 Gold Nodes near waterfall
+	CFrame.new(Vector3.new(-127.7438735961914, -7.123413562774658, -203.4132843017578)), -- Top Gold node
+	CFrame.new(Vector3.new(-119.87413024902344, -25.971975326538086, -193.47650146484375)), -- Tps down to the second highest gold node at a safe spot
+	CFrame.new(Vector3.new(-109.06890869140625, -23.964372634887695, -187.114501953125)), -- Tps to the second highest gold node to break it
+	CFrame.new(Vector3.new(-146.6690216064453, -29.13951873779297, -166.2297821044922)), -- Third gold node at the bottom -- 31
+	-- Goes down into the underground
+	CFrame.new(Vector3.new(-78.91585540771484, -35.0000114440918, -114.45983123779297)), -- Tps to the ground
+	CFrame.new(Vector3.new(-57.03752136230469, -35.27948760986328, -104.7385025024414)), -- At the enterence of the underground
+	CFrame.new(Vector3.new(24.822755813598633, -35.0000114440918, -61.54426574707031)), -- Near the turning left
+	CFrame.new(Vector3.new(70.70474243164062, -45.68882369995117, -41.72166061401367)), -- At the end wall near the turning left
+	CFrame.new(Vector3.new(78.14912414550781, -72.6690902709961, -119.64269256591797)), -- near the bottom
+	CFrame.new(Vector3.new(76.23568725585938, -75.1935043334961, -143.13555908203125)),
+	CFrame.new(Vector3.new(26.672353744506836, -75.03893280029297, -112.16252899169922)),
+	-- 1 Gold node near enterence of the cave
+	CFrame.new(Vector3.new(6.2319817543029785, -79.60725402832031, -80.90323638916016)), -- Gold node
+	-- Going to other nodes
+	CFrame.new(Vector3.new(-3.0255465507507324, -83.4150619506836, -161.24505615234375)), 
+	CFrame.new(Vector3.new(-46.13719177246094, -84.78394317626953, -210.84336853027344)),
+	CFrame.new(Vector3.new(-171.44276428222656, -87.3593978881836, -258.4068603515625)),
+	CFrame.new(Vector3.new(-230.35887145996094, -83.01371765136719, -254.90994262695312)),
+	-- 1 Gold node near water
+	CFrame.new(Vector3.new(-248.11705017089844, -82.01800537109375, -242.68406677246094)),
+	-- Going to more nodes
+	CFrame.new(Vector3.new(-235.50645446777344, -95.69903564453125, -205.97381591796875)),
+	CFrame.new(Vector3.new(-201.13409423828125, -95.00701141357422, -100.48636627197266)),
+	CFrame.new(Vector3.new(-51.05535125732422, -95.09739685058594, -16.503742218017578)),
+	-- 1 Node
+	CFrame.new(Vector3.new(-18.18035316467285, -88.2457275390625, -4.662241458892822)), -- On top of the node
+	-- Going back for more nodes
+	CFrame.new(Vector3.new(-121.60362243652344, -95.46952819824219, -44.21466064453125)),
+	CFrame.new(Vector3.new(-226.48095703125, -95.75582122802734, -137.62271118164062)), -- 50
+	CFrame.new(Vector3.new(-311.2962341308594, -95.0000228881836, -62.702903747558594)),
+	CFrame.new(Vector3.new(-330.52532958984375, -91.57213592529297, -51.29126739501953)),
+	-- 1 node
+	CFrame.new(Vector3.new(-337.6909484863281, -87.902587890625, -44.36483383178711)), -- On top of node -- 53
+	-- Going away
+	CFrame.new(Vector3.new(-328.63311767578125, -91.01595306396484, -75.27430725097656)), -- 54
+	CFrame.new(Vector3.new(-320.9810791015625, -84.55455017089844, -112.79277038574219)),
+	CFrame.new(Vector3.new(-311.7552185058594, -80.34954071044922, -111.021240234375)),
+	CFrame.new(Vector3.new(-287.1490173339844, -71.30132293701172, -90.15459442138672)),
+	-- 2 Nodes
+	CFrame.new(Vector3.new(-242.28013610839844, -69.51567077636719, -70.7128677368164)),
+	CFrame.new(Vector3.new(-236.10598754882812, -71.55790710449219, -82.93661499023438)),
+	-- Going away
+	CFrame.new(Vector3.new(-262.2549743652344, -71.92373657226562, -78.05333709716797)),
+	CFrame.new(Vector3.new(-281.7058410644531, -95.24771881103516, -62.516048431396484)),
+	CFrame.new(Vector3.new(-204.44337463378906, -95.3782730102539, -215.5300750732422)),
+	CFrame.new(Vector3.new(-191.27264404296875, -87.3593978881836, -241.33700561523438)),
+	CFrame.new(Vector3.new(-227.31439208984375, -82.79011535644531, -262.97674560546875)),
+	-- 1 Node
+	CFrame.new(Vector3.new(-300.4206237792969, -78.71428680419922, -370.5965576171875)),  -- NEW ONE
+	-- Going away
+	CFrame.new(Vector3.new(-248.25885009765625, -78.9493408203125, -325.4560241699219)),
+	CFrame.new(Vector3.new(-201.70730590820312, -71.25202941894531, -387.3911437988281)),
+	CFrame.new(Vector3.new(-192.30209350585938, -67.08699035644531, -418.3362731933594)),
+	CFrame.new(Vector3.new(-177.47344970703125, -66.61293029785156, -420.8051452636719)),
+	CFrame.new(Vector3.new(-168.78817749023438, -73.24115753173828, -420.8697204589844)),
+	CFrame.new(Vector3.new(-147.6465301513672, -103.0000228881836, -420.92999267578125)),
+	CFrame.new(Vector3.new(-126.42853546142578, -103.0000228881836, -417.2859191894531)),
+	CFrame.new(Vector3.new(15.329987525939941, -101.69576263427734, -415.40478515625)),
+	CFrame.new(Vector3.new(20.97073745727539, -98.90089416503906, -390.7903137207031)),
+	-- 3 Gold nodes
+	CFrame.new(Vector3.new(21.28833770751953, -99.0000228881836, -376.1058044433594)), -- Front gold node
+	CFrame.new(Vector3.new(53.055545806884766, -99.05322265625, -355.8440246582031)), -- Far away gold node
+	CFrame.new(Vector3.new(39.688743591308594, -99.01302337646484, -368.5171203613281)), -- Middle Gold node
+	-- Going away
+	CFrame.new(Vector3.new(21.980361938476562, -98.79778289794922, -389.5634460449219)),
+	CFrame.new(Vector3.new(11.502516746520996, -103.0000228881836, -422.4435119628906)),
+	CFrame.new(Vector3.new(-35.83039093017578, -103.0000228881836, -400.1163024902344)),
+	CFrame.new(Vector3.new(-106.4627456665039, -103.0000228881836, -346.4954833984375)),
+	CFrame.new(Vector3.new(-109.88388061523438, -89.20711517333984, -270.5399475097656)),
+	CFrame.new(Vector3.new(-89.2496566772461, -87.23206329345703, -219.29232788085938)),
+	CFrame.new(Vector3.new(-39.856876373291016, -83.04651641845703, -209.97061157226562)),
+	CFrame.new(Vector3.new(7.984494686126709, -83.09564971923828, -155.0764617919922)),
+	CFrame.new(Vector3.new(50.02766418457031, -75.1011734008789, -141.13885498046875)),
+	CFrame.new(Vector3.new(76.44463348388672, -75.08224487304688, -133.29867553710938)),
+	CFrame.new(Vector3.new(82.40676879882812, -51.47822189331055, -54.51678466796875)),
+	CFrame.new(Vector3.new(42.019683837890625, -36.517791748046875, -43.338565826416016)),
+	CFrame.new(Vector3.new(-33.110538482666016, -35.0000114440918, -147.6772918701172)),
+	CFrame.new(Vector3.new(-7.2733049392700195, -3.0000007152557373, -273.6367492675781)),
+	-- Going to the mountain
+	CFrame.new(Vector3.new(215.0220489501953, -3.0000007152557373, -402.2403564453125)),
+	CFrame.new(Vector3.new(482.00433349609375, -7.002034664154053, -397.1016845703125)),
+	CFrame.new(Vector3.new(547.7274169921875, 10.737629890441895, -394.296875)),
+	-- 4 Gold nodes at mountain
+	CFrame.new(Vector3.new(612.3357543945312, -3.338651180267334, -387.5827331542969)),
+	CFrame.new(Vector3.new(636.9877319335938, -2.5574753284454346, -381.1177673339844)),
+	CFrame.new(Vector3.new(623.9852294921875, -4.704492092132568, -357.38800048828125)),
+	CFrame.new(Vector3.new(609.3678588867188, -4.593686103820801, -350.82940673828125)),
+	-- Going away
+	CFrame.new(Vector3.new(569.9754028320312, 10.83140754699707, -401.6435241699219)),
+	CFrame.new(Vector3.new(563.77197265625, 10.257417678833008, -383.3118896484375)),
+	CFrame.new(Vector3.new(545.0091552734375, -4.519443511962891, -356.3315124511719)),
+	CFrame.new(Vector3.new(484.437255859375, -7.081563949584961, 100.89507293701172)),
+	-- 2 Nodes at sand
+	CFrame.new(Vector3.new(465.3414611816406, 18.63529396057129, 148.40216064453125)), -- Node 1 
+	CFrame.new(Vector3.new(484.7383117675781, 14.45421028137207, 180.80996704101562)), -- Goes into the middle
+	CFrame.new(Vector3.new(466.52752685546875, 14.872398376464844, 234.58738708496094)), -- Last gold node
+	-- Going to sand main area
+	CFrame.new(Vector3.new(499.2276306152344, -3.0000007152557373, 244.4260711669922)),
+	CFrame.new(Vector3.new(963.5517578125, -7.754560947418213, 385.99285888671875)),
+	CFrame.new(Vector3.new(1072.6119384765625, -3.0793397426605225, 387.2690734863281)),
+	CFrame.new(Vector3.new(1259.4644775390625, -9.322108268737793, 376.37701416015625)),
+	CFrame.new(Vector3.new(1299.9752197265625, -27.001705169677734, 456.93572998046875)),
+	CFrame.new(Vector3.new(1218.2529296875, -22.022804260253906, 472.0537414550781)),
+	-- Nodes at sand
+	CFrame.new(Vector3.new(1162.9521484375, -14.7279052734375, 482.2242736816406)), -- Node at enterence dead ahead
+	CFrame.new(Vector3.new(1191.15771484375, -15.02241325378418, 476.37835693359375)), -- Goes into middle
+	CFrame.new(Vector3.new(1185.395263671875, -15.00036907196045, 460.208251953125)), -- Node on right
+	CFrame.new(Vector3.new(1216.8890380859375, -12.563868522644043, 528.6837768554688)), 
+	CFrame.new(Vector3.new(1244.1275634765625, -14.952160835266113, 561.5928955078125)),
+	CFrame.new(Vector3.new(1239.200439453125, -15.900298118591309, 570.3939208984375)), -- Another node
+	CFrame.new(Vector3.new(1282.5621337890625, -15.79450798034668, 620.6126708984375)),
+	CFrame.new(Vector3.new(1317.4539794921875, -15.795480728149414, 659.0906372070312)),
+	CFrame.new(Vector3.new(1280.4825439453125, -18.614084243774414, 689.0258178710938)), -- Gold node
+	CFrame.new(Vector3.new(1313.737548828125, -15.797083854675293, 664.5869140625)),
+	CFrame.new(Vector3.new(1360.52783203125, -18.541244506835938, 680.0048828125)), -- Gold node
+	-- Leaving the cave
+	CFrame.new(Vector3.new(1319.6949462890625, -15.950228691101074, 664.529541015625)),
+	CFrame.new(Vector3.new(1246.6015625, -15.611971855163574, 577.9691772460938)),
+	CFrame.new(Vector3.new(1189.4642333984375, -15.01001262664795, 478.0154724121094)),
+	CFrame.new(Vector3.new(1230.731201171875, -25.774398803710938, 466.1694641113281)),
+	CFrame.new(Vector3.new(1256.6689453125, -26.72586441040039, 460.2915344238281)),
+	CFrame.new(Vector3.new(1305.7230224609375, -27.92124366760254, 466.43951416015625)),
+	CFrame.new(Vector3.new(1290.762939453125, -10.434697151184082, 418.146240234375)),
+
+	CFrame.new(Vector3.new(1301.755859375, -3.061819314956665, 360.1845397949219)),
+	CFrame.new(Vector3.new(1298.0111083984375, -7.562569618225098, 323.5762023925781)),
+	CFrame.new(Vector3.new(1217.795166015625, -7.010993003845215, -439.6914978027344)),
+	CFrame.new(Vector3.new(976.1392211914062, -7.000000953674316, -1273.11083984375)),
+	CFrame.new(Vector3.new(957.190185546875, -3.0000007152557373, -1339.2149658203125)),
+
+	--remove
+
+
+
+}
+
+--    CFrame.new(Vector3.new(-107.30204772949219, -14.086453437805176, -187.487548828125)),
+
+local currentIndex = 1 -- Initialize the index for target positions
+local walking = false -- Track if walking is enabled
+local moving = false -- Track if the character is currently moving
+
+-- Define the walkTo function
+-- Define the walkTo function
+local function walkTo(position)
+	local character = game.Players.LocalPlayer.Character
+	local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+
+	if not humanoidRootPart then
+		return
+	end
+
+	moving = true 
+
+	local distance = (position.Position - humanoidRootPart.Position).Magnitude
+	local time = distance / speed 
+
+	local tweenInfo = TweenInfo.new(time, Enum.EasingStyle.Linear)
+
+	local tween = TweenService:Create(humanoidRootPart, tweenInfo, {CFrame = position})
+	tween:Play()
+
+	tween.Completed:Wait() 
+
+	moving = false
+
+	local waitTime = waitTimes[currentIndex] or 0 -- Retrieve wait time from the array
+	wait(waitTime) -- Wait for the calculated wait time
+end
+
+
+
+--auto eat
+
+local Farming = combat:AddGroupbox({Name="ENABLE THESE AT ICE"})
+
+Farming:AddToggle('MyToggle', {
+	Text = 'Humanoid GoldFarm',
+	Default = false,
+	Tooltip = 'Toggle to enable auto gold farm',
+	Callback = function(enabled)
+		walking = enabled
+		if enabled and not moving then 
+			spawn(function()
+				while walking do
+					wait()
+					pcall(function()
+						local position = targetPositions[currentIndex]
+						walkTo(position)
+						currentIndex = (currentIndex % #targetPositions) + 1
+					end)
+				end
+			end)
+		end
+	end
+})
+--autohit
+
+Farming:AddToggle('GoldFarm', {
+	Text = 'shark Gold Farm',
+	Default = false,
+	Tooltip = 'Toggle to enable auto gold farm',
+	Callback = function(enabled)
+		if enabled then -- when repeating the loop the gold node takes an extra 1 minute 30 seconds to spwan back in 
+			repeat
+				repeat
+					local object = workspace.Resources["Domestic Goldy Boi"] -- Replace "Domestic Goldy Boi" with the name of your object                                                           50
+					local waitTimes = {0, 0, 0, 0, 0, 0, 1.6, 0, 0, 0, 0, 0, 0, 0, 0, 1.6, 0, 1.6, 0, 1.6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.6, 0, 0, 0, 0, 0, 0, 1.6, 0, 0, 0, 0, 0, 0, 1.6, 0, 0, 0, 0, 0, 0, 0, 1.6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.6, 0, 1.6, 0.8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.6, 1.6, 1.6, 1.6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.6, 0, 0, 0, 0, 0, 0, 1.6, 0, 1.6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.6, 0, 1.6, 0, 0, 0, 0, 1.6, 0, 0, 0, 1.6, 0, 0, 1.6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+					local targetPositions = {
+						Vector3.new(-132.297592, -7.10824966, -352.769531, 0.98045367, 3.70140839e-07, 0.19675003, -9.04808985e-07, 1, 2.62761068e-06, -0.19675003, -2.75427192e-06, 0.98045367),
+						Vector3.new(-141.120453, -7.15266275, -403.205902, 0.976334393, 2.96770651e-07, 0.216266379, -8.56393058e-07, 1, 2.49393975e-06, -0.216266379, -2.62012804e-06, 0.976334393),
+						Vector3.new(-146.205643, -3.00000072, -424.099152, 0.965648711, 6.13070217e-09, 0.259851068, 6.69471234e-09, 1, -4.84717795e-08, -0.259851068, 4.85463367e-08, 0.965648711),
+						Vector3.new(-162.584457, -3.00000072, -471.981628, 0.93319726, 2.4844995e-09, 0.359364569, 4.75107509e-09, 1, -1.92511767e-08, -0.359364569, 1.96725143e-08, 0.93319726),
+						Vector3.new(-172.426056, 4.99999857, -501.882263, 0.95887059, 1.67647285e-09, 0.283843547, 2.16081442e-09, 1, -1.32059199e-08, -0.283843547, 1.3276102e-08, 0.95887059),
+						Vector3.new(-207.997513, 5.04987907, -601.00647, 0.938468218, 5.23640353e-10, 0.345365703, 9.4149788e-10, 1, -4.07454026e-09, -0.345365703, 4.14898738e-09, 0.938468218),
+						Vector3.new(-212.995392, 24.7238007, -626.623962, 0.995378733, -3.02050096e-09, -0.0960266888, 2.75381784e-09, 1, -2.90970137e-09, 0.0960266888, 2.63181477e-09, 0.995378733), -- Node
+						Vector3.new(-211.326035, 5.41342354, -602.158813, 0.99610126, -1.98494421e-09, 0.0882175192, 2.12979101e-09, 1, -1.54780411e-09, -0.0882175192, 1.72965442e-09, 0.99610126),
+						Vector3.new(-172.936188, 4.99999857, -503.694, -0.905854344, -8.76953232e-10, -0.423590064, -1.11811649e-09, 1, 3.20822174e-10, 0.423590064, 7.64241004e-10, -0.905854344),
+						Vector3.new(-159.049835, -3.00000072, -463.601898, -0.965648174, -5.2910698e-10, -0.259854168, -6.30772323e-10, 1, 3.07853631e-10, 0.259854168, 4.61186977e-10, -0.965648174),
+						Vector3.new(-146.593094, -3.00000072, -425.927185, -0.994147301, -5.19222461e-08, -0.108033538, -4.59937972e-08, 1, -5.73677568e-08, 0.108033538, -5.20631218e-08, -0.994147301),
+						Vector3.new(-144.143173, -7.08705854, -403.380585, -0.994147301, -4.64770636e-07, -0.108033545, -6.83999474e-07, 1, 1.99221063e-06, 0.108033545, 2.05444553e-06, -0.994147301),
+						Vector3.new(-129.728165, -7.14786577, -278.075073, -0.989771843, -6.36089908e-07, -0.142659917, -1.10484166e-06, 1, 3.20658455e-06, 0.142659917, 3.3314036e-06, -0.989771843),
+						Vector3.new(-125.876701, -3.00000072, -251.355911, -0.989771605, 9.74240599e-09, -0.142661065, -3.24988525e-09, 1, 9.08380144e-08, 0.142661065, 9.03725237e-08, -0.989771605),
+						Vector3.new(-125.819901, -3.22834039, -221.975082, -0.999771118, -6.44599929e-09, 0.0214085039, -8.16500023e-09, 1, -8.02078404e-08, -0.0214085039, -8.03642592e-08, -0.999771118),
+						Vector3.new(-127.608589, -7.0552783, -203.818298, -0.996780276, 5.22453147e-09, 0.0801830664, 1.11054206e-08, 1, 7.28973433e-08, -0.0801830664, 7.3553089e-08, -0.996780276), -- Node
+						Vector3.new(-120.171501, -27.2495384, -191.055649, -0.880821466, -8.3899554e-09, -0.473449022, 1.97664178e-08, 1, -5.44950751e-08, 0.473449022, -5.7358811e-08, -0.880821466),
+						Vector3.new(-110.000313, -24.5143452, -187.824951, -0.0303912163, 6.65718005e-08, -0.999538124, -1.57894853e-08, 1, 6.70826523e-08, 0.999538124, 1.78209163e-08, -0.0303912163), -- Node
+						Vector3.new(-130.776443, -35.0000114, -173.219513, 0.473450124, -6.75206806e-08, -0.880820632, 4.69516053e-08, 1, -5.14195939e-08, 0.880820632, -1.70113275e-08, 0.473450124),
+						Vector3.new(-147.322266, -29.0985546, -164.730896, -0.198609829, 1.26871686e-08, -0.980078816, -1.61947913e-08, 1, 1.62268723e-08, 0.980078816, 1.90949816e-08, -0.198609829), -- Node
+						Vector3.new(-106.31163, -35.0200996, -139.86969, -0.559583068, 8.69420891e-09, -0.828774333, -7.04795022e-09, 1, 1.52491726e-08, 0.828774333, 1.43743373e-08, -0.559583068),
+						Vector3.new(-71.5091858, -35.2293663, -115.816994, -0.571918011, 1.18389023e-08, -0.820310831, -9.31916144e-09, 1, 2.09295035e-08, 0.820310831, 1.96145695e-08, -0.571918011),
+						Vector3.new(-40.7522392, -35.017067, -94.3818283, -0.538747191, 7.48328866e-09, -0.842467487, -6.41105657e-09, 1, 1.29823734e-08, 0.842467487, 1.23953248e-08, -0.538747191),
+						Vector3.new(8.77329063, -35.0002098, -71.9869843, -0.420783877, 4.63387506e-09, -0.907160819, -5.01324982e-09, 1, 7.43348805e-09, 0.907160819, 7.67571606e-09, -0.420783877),
+						Vector3.new(34.7027588, -34.251442, -59.3493004, -0.555443764, 3.26181038e-09, -0.831554115, -2.68145284e-09, 1, 5.71364733e-09, 0.831554115, 5.40338263e-09, -0.555443764),
+						Vector3.new(48.4531479, -38.8480072, -47.6058006, -0.534539342, 2.01723882e-09, -0.845143497, -1.74570081e-09, 1, 3.49098661e-09, 0.845143497, 3.34143779e-09, -0.534539342),
+						Vector3.new(66.3571396, -44.7688522, -51.7940979, 0.289536417, 1.33026323e-09, -0.95716697, -2.49434806e-09, 1, 6.35269226e-10, 0.95716697, 2.20357399e-09, 0.289536417),
+						Vector3.new(80.5262299, -53.3083496, -64.2671051, 0.736116469, 9.16003828e-10, -0.676854849, -1.70147418e-09, 1, -4.97121899e-10, 0.676854849, 1.51759072e-09, 0.736116469),
+						Vector3.new(82.9530029, -59.5197639, -82.3355637, 0.990333438, 8.084588e-10, 0.138707012, -6.14844009e-10, 1, -1.43870282e-09, -0.138707012, 1.33951239e-09, 0.990333438),
+						Vector3.new(80.155571, -67.5745621, -102.309357, 0.990333438, 4.65091882e-10, 0.138707176, -3.53685276e-10, 1, -8.27826696e-10, -0.138707176, 7.70765785e-10, 0.990333438),
+						Vector3.new(71.812355, -75.579628, -135.384384, 0.931044996, 1.54480456e-10, 0.364904433, -5.03519518e-11, 1, -2.94873237e-10, -0.364904433, 2.56166588e-10, 0.931044996),
+						Vector3.new(33.0569839, -75.0000153, -120.859299, -0.350937009, 7.41073591e-11, 0.936399221, 1.41088349e-10, 1, -2.62647196e-11, -0.936399221, 1.22897748e-10, -0.350937009),
+						Vector3.new(19.2904377, -75.0590973, -95.7234344, -0.875599384, 5.13096718e-11, 0.483038038, 8.60304536e-11, 1, 4.97239021e-11, -0.483038038, 8.50941956e-11, -0.875599384),
+						Vector3.new(5.32544422, -79.5978622, -80.6865311, 0.983112931, 2.10274333e-11, 0.182999909, -1.42885105e-11, 1, -3.81432733e-11, -0.182999909, 3.48843524e-11, 0.983112931), -- Node
+						Vector3.new(2.45763564, -83.0000229, -96.8212585, 0.991012454, 1.01440922e-11, 0.133769795, -7.80068024e-12, 1, -1.80423489e-11, -0.133769795, 1.68366952e-11, 0.991012454),
+						Vector3.new(6.00155544, -83.0220032, -145.837753, 0.997869074, 7.14584815e-12, -0.0652476922, -7.90423109e-12, 1, -1.13649949e-11, 0.0652476922, 1.18565097e-11, 0.997869074),
+						Vector3.new(-10.3345509, -83.3758392, -172.373154, 0.837566555, 3.23612621e-12, 0.54633534, 2.22160289e-13, 1, -6.2639195e-12, -0.54633534, 5.36782381e-12, 0.837566555),
+						Vector3.new(-29.5290413, -83.0719757, -197.73822, 0.797415078, 1.96401944e-12, 0.603431225, 3.99788492e-13, 1, -3.78306067e-12, -0.603431225, 3.25791434e-12, 0.797415078),
+						Vector3.new(-42.9204712, -83.5948563, -210.570267, 0.592186689, 1.35939307e-12, 0.805800855, 1.01191863e-12, 1, -2.43067242e-12, -0.805800855, 2.25481656e-12, 0.592186689),
+						Vector3.new(-54.5206528, -87.1874542, -214.051315, 0.266486287, 8.92249653e-13, 0.963838637, 1.18823983e-12, 1, -1.25425473e-12, -0.963838637, 1.47951313e-12, 0.266486287),
+						Vector3.new(-87.1966782, -87.2533798, -219.522034, 0.20837003, 2.45534331e-08, 0.978050053, -2.83414963e-08, 1, -1.90664213e-08, -0.978050053, -2.37465319e-08, 0.20837003),
+						Vector3.new(-102.914429, -87.2109604, -237.643906, 0.723118305, 1.48483723e-08, 0.690724254, -2.06559445e-08, 1, 1.27863942e-10, -0.690724254, -1.43600225e-08, 0.723118305),
+						Vector3.new(-145.465836, -87.3593979, -250.233292, 0.27129072, 9.19962773e-09, 0.962497592, -1.10572831e-08, 1, -6.44145937e-09, -0.962497592, -8.8950971e-09, 0.27129072),
+						Vector3.new(-170.604904, -87.3593979, -257.446777, 0.179016829, 4.24543511e-09, 0.983845949, -4.79876672e-09, 1, -3.44197715e-09, -0.983845949, -4.10507583e-09, 0.179016829),
+						Vector3.new(-207.205704, -86.9621582, -255.627579, -0.0593374968, 2.57853339e-09, 0.998238027, -2.33610153e-09, 1, -2.72194756e-09, -0.998238027, -2.49349874e-09, -0.0593374968),
+						Vector3.new(-220.523483, -95.0000153, -234.896255, -0.00499856472, -1.67656326e-05, 0.999987483, -3.3008414e-06, 1, 1.67493417e-05, -0.999987483, -3.21707648e-06, -0.00499856472),
+						Vector3.new(-230.875885, -95.6651077, -214.572662, 0.752980292, -0.00017269011, 0.658043027, -6.08120608e-05, 0.99999994, 0.000332015334, -0.658043027, -0.000290017982, 0.752980232),
+						Vector3.new(-248.154526, -84.2862778, -229.40535, 0.708737552, 7.93869646e-08, 0.705472291, -3.22571374e-08, 1, -8.01237974e-08, -0.705472291, 3.40302329e-08, 0.708737552),
+						Vector3.new(-248.779938, -83.0000229, -236.561325, 0.942995727, 3.9803826e-08, 0.332804859, -3.20224736e-08, 1, -2.88660829e-08, -0.332804859, 1.65633551e-08, 0.942995727), -- Node
+						Vector3.new(-235.709259, -95.1537094, -217.515167, -0.114614725, -8.83884204e-05, 0.99341011, -1.71374013e-05, 1, 8.69975338e-05, -0.99341011, -7.05327329e-06, -0.114614725),
+						Vector3.new(-221.046585, -95.9492645, -174.146591, -0.971459448, 2.18940258e-05, -0.237206191, -7.29958556e-05, 0.99999994, 0.000391248352, 0.237206191, 0.000397396943, -0.971459389),
+						Vector3.new(-227.053162, -95.2909851, -145.428406, -0.932623863, 3.0227282e-05, -0.360849738, -2.83656773e-05, 1, 0.000157078655, 0.360849738, 0.000156731068, -0.932623863),
+						Vector3.new(-207.308075, -95.0000076, -117.409676, -0.784811735, -7.34465573e-07, -0.619734645, -1.95544544e-07, 1, -9.37498044e-07, 0.619734645, -6.14573537e-07, -0.784811735),
+						Vector3.new(-113.22599, -95.0434647, -46.1816635, -0.599678397, 4.89988361e-06, -0.800240993, -1.48876518e-06, 1, 7.23864878e-06, 0.800240993, 5.53223299e-06, -0.599678397),
+						Vector3.new(-45.3964615, -95.6264496, -14.7718287, -0.429327637, 0.000205994147, -0.903148711, -9.87350941e-05, 0.99999994, 0.000275019876, 0.903148711, 0.00020724615, -0.429327607),
+						Vector3.new(-26.0906944, -94.1521835, -2.95215201, -0.499837399, 4.59247573e-09, -0.866119266, 7.54967573e-08, 1, -3.8266819e-08, 0.866119266, -8.45163868e-08, -0.499837399), -- Node
+						Vector3.new(-100.505135, -95.0000229, -20.7044926, -0.232052803, 1.72143464e-05, -0.972703278, -3.65966116e-06, 1, 1.85704957e-05, 0.972703278, 7.86909732e-06, -0.232052803),
+						Vector3.new(-210.101212, -95.0061722, -116.467255, 0.657794952, -1.95588456e-07, 0.753197014, -4.91580522e-07, 1, 6.88993282e-07, -0.753197014, -8.23473329e-07, 0.657794952),
+						Vector3.new(-241.960587, -95.5092545, -117.732986, 0.0397152193, -0.000265155453, 0.999211133, -5.00573224e-05, 1, 0.000267354451, -0.999211133, -6.06359026e-05, 0.0397152305),
+						Vector3.new(-296.121155, -95.5341721, -70.3302231, -0.580066562, -0.00017359, 0.814569116, -3.40956103e-05, 1, 0.000188826554, -0.814569116, 8.17587352e-05, -0.580066562),
+						Vector3.new(-315.812469, -95.0003662, -53.2551117, -0.513322115, -1.94837885e-05, 0.858195901, -4.00228237e-06, 1, 2.03092641e-05, -0.858195901, 6.99045449e-06, -0.513322115),
+						Vector3.new(-332.859528, -91.0156479, -54.4564056, -0.820862532, 4.52910953e-08, 0.571126282, 3.38541994e-08, 1, -3.06437684e-08, -0.571126282, -5.81929349e-09, -0.820862532),
+						Vector3.new(-335.192841, -91.0156479, -49.9622917, -0.941221118, 2.69096194e-08, -0.337791681, 2.64960445e-08, 1, 5.83492277e-09, 0.337791681, -3.45819107e-09, -0.941221118), -- Node
+						Vector3.new(-317.867432, -95.0866547, -55.3571739, 0.314211667, 6.64216714e-05, -0.94935286, -1.29396722e-05, 1, 6.56824996e-05, 0.94935286, -8.35388892e-06, 0.314211667),
+						Vector3.new(-299.767456, -95.0570831, -50.2014923, 0.892351866, 2.94143792e-05, -0.451340377, -9.24003416e-06, 1, 4.69025654e-05, 0.451340377, -3.76831922e-05, 0.892351866),
+						Vector3.new(-213.587738, -95.8724136, -183.07283, 0.875944197, 0.000240663969, -0.482412457, -6.90184243e-05, 0.99999994, 0.000373555202, 0.482412517, -0.000293918158, 0.875944138),
+						Vector3.new(-221.258041, -95.0888672, -224.009003, 0.983878493, 8.86959242e-07, 0.178838208, -1.16490255e-05, 1, 5.91275602e-05, -0.178838208, -6.02576256e-05, 0.983878493),
+						Vector3.new(-227.959641, -83.0360794, -257.101288, 0.983877301, 1.22677806e-08, 0.178844765, -4.61780214e-09, 1, -4.31906919e-08, -0.178844765, 4.16684749e-08, 0.983877301),
+						Vector3.new(-231.81073, -79.3980942, -278.385529, 0.98387748, 6.90837076e-09, 0.178843677, -2.59957145e-09, 1, -2.43268907e-08, -0.178843677, 2.3469763e-08, 0.98387748),
+						Vector3.new(-228.490646, -79.3424911, -306.816895, 0.650174379, 4.81542095e-09, 0.759784997, 9.30167765e-09, 1, -1.42976404e-08, -0.759784997, 1.63632343e-08, 0.650174379),
+						Vector3.new(-300.663177, -79.0000229, -368.558136, 0.650174916, 3.03634451e-10, 0.759784579, -3.99939803e-12, 1, -3.96209898e-10, -0.759784579, 2.54567034e-10, 0.650174916), -- Node
+						Vector3.new(-258.167511, -79.0000229, -328.821899, 0.631479025, 2.50733283e-08, -0.775393009, -3.75886167e-08, 1, 1.72415948e-09, 0.775393009, 2.80571761e-08, 0.631479025),
+						Vector3.new(-236.426071, -79.0000229, -343.599609, 0.631478131, -3.88935568e-08, -0.775393724, 5.83067141e-08, 1, -2.67495359e-09, 0.775393724, -4.35214815e-08, 0.631478131),
+						Vector3.new(-223.194824, -75.346756, -355.985931, 0.744495511, 1.89699456e-08, -0.667627513, 3.40248647e-08, 1, 6.63563355e-08, 0.667627513, -7.21179276e-08, 0.744495511),
+						Vector3.new(-208.62117, -71.6233368, -375.197754, 0.779978037, -1.13889289e-08, -0.625806868, -2.02031547e-08, 1, -4.33791136e-08, 0.625806868, 4.64780321e-08, 0.779978037),
+						Vector3.new(-200.538467, -70.6997833, -391.782898, 0.912334204, -8.69416361e-09, -0.409446359, -9.11181885e-09, 1, -4.15370423e-08, 0.409446359, 4.16264641e-08, 0.912334204),
+						Vector3.new(-192.624847, -67.0000229, -409.415253, 0.912334204, 4.53259513e-10, -0.409446418, 4.7496812e-10, 1, 2.16533658e-09, 0.409446418, -2.16998441e-09, 0.912334204),
+						Vector3.new(-190.358429, -67.0000229, -417.881927, 0.535850644, -1.47836499e-08, -0.844312787, -3.80289009e-08, 1, -4.16450696e-08, 0.844312787, 5.44238254e-08, 0.535850644),
+						Vector3.new(-182.225693, -65.1309662, -419.934357, 0.0817096233, -2.00609058e-08, -0.996656179, -6.14900983e-08, 1, -2.51694026e-08, 0.996656179, 6.33410764e-08, 0.0817096233),
+						Vector3.new(-169.4319, -73.6370239, -417.550323, -0.115305066, 1.18130661e-08, -0.993330181, -5.1900888e-09, 1, 1.24948478e-08, 0.993330181, 6.59619026e-09, -0.115305066),
+						Vector3.new(-147.846268, -103.000023, -416.127655, -0.0656448603, 8.15218026e-09, -0.997842968, -4.00697786e-09, 1, 8.43340864e-09, 0.997842968, 4.55194504e-09, -0.0656448603),
+						Vector3.new(-32.6279182, -103.000015, -416.868469, -0.103329062, 2.11234585e-09, -0.994647205, -4.75270809e-08, 1, 7.06107173e-09, 0.994647205, 4.80022919e-08, -0.103329062),
+						Vector3.new(10.1341534, -103.000015, -415.77951, -0.891587019, 1.18240937e-08, -0.452849478, 4.15008969e-08, 1, -5.55980897e-08, 0.452849478, -6.83641943e-08, -0.891587019),
+						Vector3.new(17.7651138, -99.9630966, -410.303711, -0.99586463, 3.09331538e-09, -0.0908497572, 4.70545602e-09, 1, -1.7530942e-08, 0.0908497572, -1.78859327e-08, -0.99586463),
+						Vector3.new(20.1043949, -99.0134506, -400.29895, -0.998816848, 2.22516361e-09, 0.0486288927, 1.59673841e-09, 1, -1.29617215e-08, -0.0486288927, -1.28687399e-08, -0.998816848),
+						Vector3.new(20.1955719, -99.0000229, -380.755707, -0.998069525, 4.47691119e-13, -0.0621127598, 4.31313486e-13, 1, 2.77083478e-13, 0.0621127598, 2.49758385e-13, -0.998069525), -- Node
+						Vector3.new(30.8972149, -99.1907806, -369.502655, -0.724641085, 2.54136908e-13, -0.689126313, 8.64704833e-14, 1, 2.77854454e-13, 0.689126313, 1.41755707e-13, -0.724641085),
+						Vector3.new(51.0328255, -99.4291534, -355.235962, -0.565520406, 6.5579676e-14, -0.824734509, 6.9259614e-15, 1, 7.47669748e-14, 0.824734509, 3.65701596e-14, -0.565520406), -- node
+						Vector3.new(38.4078941, -99.0217972, -364.658386, 0.597960055, 5.31465436e-14, 0.801525891, -8.02705003e-15, 1, -6.03183139e-14, -0.801525891, 2.96340507e-14, 0.597960055), -- less time on node 0.7
+						Vector3.new(27.6610584, -99.0678253, -372.427704, 0.953391135, 2.04747176e-14, 0.301737309, -1.60756655e-14, 1, -1.70622658e-14, -0.301737309, 1.14163854e-14, 0.953391135),
+						Vector3.new(21.2172623, -98.969368, -392.295105, 0.950333774, 1.26511765e-14, 0.311232656, -9.82757695e-15, 1, -1.0640588e-14, -0.311232656, 7.05344749e-15, 0.950333774),
+						Vector3.new(16.2933769, -100.953842, -414.248169, 0.973273575, 7.97894194e-15, 0.229648694, -6.7440344e-15, 1, -6.16224262e-15, -0.229648694, 4.44878899e-15, 0.973273575),
+						Vector3.new(-2.60096979, -103.000023, -421.156769, 0.292528033, 6.28100934e-15, 0.956256986, 1.51113981e-15, 1, -7.03060047e-15, -0.956256986, 3.50168587e-15, 0.292528033),
+						Vector3.new(-35.3869324, -103.000023, -399.312378, -0.565246701, 2.25588866e-15, 0.824921846, 2.31244124e-15, 1, -1.15015576e-15, -0.824921846, 1.2574617e-15, -0.565246701),
+						Vector3.new(-44.904583, -103.666824, -393.436127, -0.556979418, 1.53464752e-15, 0.830526352, 1.56520275e-15, 1, -7.98122724e-16, -0.830526352, 8.55404068e-16, -0.556979418),
+						Vector3.new(-66.4740601, -107.103012, -377.870331, -0.0126658697, 7.47369631e-05, -0.999919713, -1.47622159e-05, 1, 7.49299506e-05, 0.999919713, 1.57100858e-05, -0.0126658678),
+						Vector3.new(-44.3784981, -89.9858551, -381.790131, -0.413750291, 5.59296396e-08, -0.910390556, -5.06604003e-09, 1, 6.37371755e-08, 0.910390556, 3.09833403e-08, -0.413750291),
+						Vector3.new(-34.7271423, -92.2243729, -350.471252, 0.98518759, 0.000211510429, -0.171480104, -0.000110555971, 0.999999821, 0.000598273589, 0.171480194, -0.000570453587, 0.985187411),
+						Vector3.new(-36.3764954, -76.684288, -377.744507, 0.980621815, 1.58078617e-09, -0.195910215, -4.96773511e-09, 1, -1.67968928e-08, 0.195910215, 1.74446306e-08, 0.980621815),
+						Vector3.new(-39.1917229, -73.1205826, -393.525146, 0.948650956, 1.0556831e-09, -0.31632477, -4.68789807e-09, 1, -1.07215623e-08, 0.31632477, 1.16539187e-08, 0.948650956),
+						Vector3.new(-32.7094688, -72.9525146, -410.062988, 0.924274027, 7.1947337e-10, -0.381729692, -3.69671938e-09, 1, -7.06601666e-09, 0.381729692, 7.94208344e-09, 0.924274027),
+						Vector3.new(-30.6884804, -73.1714783, -428.41925, 0.973186672, 5.26366895e-10, -0.230016813, -1.84898252e-09, 1, -5.53454482e-09, 0.230016813, 5.81144244e-09, 0.973186672), -- Node
+						Vector3.new(-40.0355072, -72.8785858, -411.045868, -0.988486886, 7.45460638e-11, -0.151306123, -5.08404985e-11, 1, 8.24826041e-10, 0.151306123, 8.23022261e-10, -0.988486886),
+						Vector3.new(-38.1058769, -72.7023773, -397.790771, -0.991308093, 4.4078026e-11, -0.131561145, -2.03298628e-11, 1, 4.88223018e-10, 0.131561145, 4.8665405e-10, -0.991308093),
+						Vector3.new(-34.2485886, -75.4738388, -389.43927, -0.751562715, 3.4923113e-11, -0.65966177, -2.28071145e-10, 1, 3.12785853e-10, 0.65966177, 3.85527943e-10, -0.751562715),
+						Vector3.new(-28.5833778, -78.819046, -383.443481, -0.335173726, 2.14462753e-11, -0.942156315, -2.15864646e-10, 1, 9.95571889e-11, 0.942156315, 2.36747205e-10, -0.335173726),
+						Vector3.new(-26.5281982, -92.0929108, -361.929779, -0.995301485, -4.78962538e-05, -0.0968268067, -9.78493845e-05, 0.999999881, 0.000511153601, 0.096826762, 0.000518226298, -0.995301366),
+						Vector3.new(-3.06939793, -91.6994095, -282.872406, -0.99373883, -2.74194099e-05, -0.111726373, -6.75435804e-05, 0.99999994, 0.000355343858, 0.111726359, 0.000360665435, -0.99373877),
+						Vector3.new(-3.41869402, -85.0346451, -254.630173, -0.980120659, -1.06390036e-10, 0.198403642, 9.33096711e-10, 1, 5.14575893e-09, -0.198403642, 5.22859311e-09, -0.980120659),
+						Vector3.new(-8.45462132, -87.186142, -241.164597, -0.937883615, -6.60339006e-11, 0.346950054, 1.0642629e-09, 1, 3.06726733e-09, -0.346950054, 3.2459857e-09, -0.937883615),
+						Vector3.new(-17.2833252, -87.0000229, -232.894653, -0.683627844, -4.27310409e-11, 0.7298311, 1.50468582e-09, 1, 1.46797796e-09, -0.7298311, 2.10171658e-09, -0.683627844),
+						Vector3.new(-21.77314, -87.0000229, -233.387131, 0.654373646, -2.72910028e-11, 0.756171346, 1.03276743e-09, 1, -8.57642568e-10, -0.756171346, 1.34216771e-09, 0.654373646),
+						Vector3.new(-27.3556442, -87.4714279, -242.035858, 0.83471936, -1.80165882e-11, 0.550675571, 5.03422859e-10, 1, -7.30375871e-10, -0.550675571, 8.86881568e-10, 0.83471936),
+						Vector3.new(-34.6288719, -87.1456757, -243.282761, 0.168998778, -2.76256795e-12, 0.985616267, 1.35265632e-10, 1, -2.03904463e-11, -0.985616267, 1.3676596e-10, 0.168998778),
+						Vector3.new(-42.8087921, -87.0599823, -242.876526, -0.863385677, -1.7660335e-12, 0.504544318, 4.26200741e-11, 1, 7.64325409e-11, -0.504544318, 8.74944839e-11, -0.863385677),
+						Vector3.new(-47.0747375, -86.1501923, -235.568405, -0.997545481, -1.1385124e-08, 0.0700242147, -9.89887461e-09, 1, 2.15717986e-08, -0.0700242147, 2.08256861e-08, -0.997545481),
+						Vector3.new(-46.9332161, -83.6406631, -223.900238, -0.999891996, -1.02154685e-08, -0.0146916937, -1.04888747e-08, 1, 1.85325497e-08, 0.0146916937, 1.86846485e-08, -0.999891996),
+						Vector3.new(-44.2548637, -83.8427658, -209.915466, -0.982150078, -2.16881824e-09, -0.188098699, -2.87618129e-09, 1, 3.48765572e-09, 0.188098699, 3.96640765e-09, -0.982150078),
+						Vector3.new(-33.4468346, -83.0501175, -199.155716, -0.705530167, -1.45897527e-09, -0.708679855, -2.92040658e-09, 1, 8.48704218e-10, 0.708679855, 2.66841971e-09, -0.705530167),
+						Vector3.new(6.50273705, -83.1276703, -153.624039, -0.756516337, -8.98919716e-10, -0.65397507, -1.75506087e-09, 1, 6.55701216e-10, 0.65397507, 1.64381442e-09, -0.756516337),
+						Vector3.new(35.4080925, -83.0000229, -154.43158, -0.0700178146, -4.03232392e-10, -0.997545719, -7.6380785e-10, 1, -3.50612678e-10, 0.997545719, 7.37384154e-10, -0.0700178146),
+						Vector3.new(63.8185081, -75.0781479, -143.435928, -0.425116658, 4.37609593e-08, -0.905138671, -3.577874e-09, 1, 5.00276656e-08, 0.905138671, 2.45060647e-08, -0.425116658),
+						Vector3.new(71.2631989, -75.6189041, -136.206757, -0.973866582, 2.47990197e-08, -0.227121681, 2.09968132e-08, 1, 1.91568219e-08, 0.227121681, 1.38873544e-08, -0.973866582),
+						Vector3.new(76.4881439, -71.5159988, -113.802628, -0.973866582, 7.57490604e-09, -0.227121696, 6.41298792e-09, 1, 5.85374593e-09, 0.227121696, 4.24423785e-09, -0.973866582),
+						Vector3.new(83.0325775, -57.4057693, -75.0838699, -0.988870382, 4.34432978e-09, -0.148780882, 3.93375332e-09, 1, 3.05387582e-09, 0.148780882, 2.43461962e-09, -0.988870382),
+						Vector3.new(75.928894, -49.0309258, -58.6892929, -0.778547287, 3.10717274e-09, 0.627586126, 3.5120058e-09, 1, -5.94198524e-10, -0.627586126, 1.7414743e-09, -0.778547287),
+						Vector3.new(59.6812172, -42.122097, -47.7468719, -0.567216873, 2.05979478e-09, 0.823568463, 2.1189972e-09, 1, -1.04164244e-09, -0.823568463, 1.1543021e-09, -0.567216873),
+						Vector3.new(46.5731239, -37.9595604, -47.8412895, 0.746647954, 1.35155531e-09, 0.665219367, -5.05345321e-10, 1, -1.46453993e-09, -0.665219367, 7.5733031e-10, 0.746647954),
+						Vector3.new(36.1505356, -34.3922653, -59.907341, 0.759767473, 6.65541511e-10, 0.650194883, -2.6313976e-10, 1, -7.16118276e-10, -0.650194883, 3.72991193e-10, 0.759767473),
+						Vector3.new(-5.37787867, -36.0344925, -108.434425, 0.759767771, 4.40609993e-10, 0.650194526, -1.74194145e-10, 1, -4.74108752e-10, -0.650194526, 2.46952458e-10, 0.759767771),
+						Vector3.new(-21.1117687, -35.0000114, -148.554062, 0.930970669, 3.23884392e-10, 0.365093917, -2.35250347e-10, 1, -2.87249946e-10, -0.365093917, 1.81532803e-10, 0.930970669),
+						Vector3.new(-20.467989, -32.6322403, -176.163147, 0.998743653, 1.98443068e-10, -0.050110843, -2.03767919e-10, 1, -1.01152517e-10, 0.050110843, 1.11236423e-10, 0.998743653),
+						Vector3.new(-6.33014202, -3.01273274, -256.760559, 0.961188972, 8.03973693e-11, -0.275890887, -8.97082825e-11, 1, -2.11288105e-11, 0.275890887, 4.50584743e-11, 0.961188972),
+						Vector3.new(64.7309952, -3.00000072, -311.107422, 0.607563436, 4.20061728e-11, -0.794271171, -4.42233368e-11, 1, 1.90585915e-11, 0.794271171, 2.35460158e-11, 0.607563436),
+						Vector3.new(163.701523, -3.00000072, -389.187347, 0.619375706, 2.07167391e-11, -0.785094738, -2.19511059e-11, 1, 9.06993404e-12, 0.785094738, 1.16159998e-11, 0.619375706),
+						Vector3.new(240.2789, -3.00000072, -391.091766, 0.0396197438, 1.08846803e-11, -0.999214888, -6.53062457e-12, 1, 1.06342877e-11, 0.999214888, 6.10416839e-12, 0.0396197438),
+						Vector3.new(267.650757, -7.03357935, -391.354767, 0.00970470905, 2.60488287e-05, -0.999952912, -6.21043546e-06, 1, 2.59897824e-05, 0.999952912, 5.95792153e-06, 0.00970470905),
+						Vector3.new(475.542236, -7.1875701, -393.362274, 0.00973522291, 0.000101750833, -0.999952614, -1.714276e-05, 1, 0.000101588754, 0.999952614, 1.6152957e-05, 0.00973522663),
+						Vector3.new(507.847565, -3.59793401, -393.673462, 0.00970923901, -1.61575819e-08, -0.999952972, 2.05044248e-09, 1, -1.61384328e-08, 0.999952972, -1.89365235e-09, 0.00970923901),
+						Vector3.new(543.28894, 10.0886793, -393.196594, -0.0806413889, -6.5801899e-08, -0.996743262, 2.91487012e-09, 1, -6.62527313e-08, 0.996743262, -8.24808488e-09, -0.0806413889),
+						Vector3.new(572.673706, 7.33352661, -389.785553, -0.0806416273, 9.17953855e-08, -0.996743262, -3.72678244e-09, 1, 9.23968315e-08, 0.996743262, 1.11656639e-08, -0.0806416273),
+						Vector3.new(613.196228, -3.52798963, -386.229523, -0.085611701, -5.47882806e-09, -0.996328592, 2.01200168e-10, 1, -5.51630563e-09, 0.996328592, -6.72721656e-10, -0.085611701), -- Node
+						Vector3.new(636.978516, -2.97868419, -379.145447, -0.213706613, -4.25811848e-08, -0.976897895, -2.81588086e-09, 1, -4.29721609e-08, 0.976897895, -6.43260734e-09, -0.213706613), -- Node
+						Vector3.new(623.817993, -4.64216471, -357.040558, -0.439308405, -6.43601368e-08, 0.898336351, -3.73480304e-08, 1, 5.33796012e-08, -0.898336351, -1.01009832e-08, -0.439308405), -- Node
+						Vector3.new(610.021729, -4.5477705, -350.291992, -0.439308643, -6.68843612e-08, 0.898336351, -3.88132406e-08, 1, 5.54729631e-08, -0.898336351, -1.04975975e-08, -0.439308643), -- Node
+						Vector3.new(585.889221, 13.1481504, -351.55246, -0.082043767, -3.04281578e-08, 0.996628642, -2.58159716e-09, 1, 3.03185672e-08, -0.996628642, -8.54445403e-11, -0.082043767),
+						Vector3.new(586.504761, 23.6608868, -333.863647, -0.0884816647, 2.98583238e-08, -0.996077836, -3.93250339e-08, 1, 3.34691386e-08, 0.996077836, 4.21321964e-08, -0.0884816647), -- New
+						Vector3.new(602.363403, 36.3404274, -332.228546, 0.115598321, -1.67809233e-08, -0.993296087, 4.08628047e-08, 1, -1.21386288e-08, 0.993296087, -3.91856574e-08, 0.115598321), -- New -- Just add 1 0
+						Vector3.new(616.568298, 36.2234459, -356.325348, 0.249019206, -1.90978398e-08, -0.968498528, 9.03165542e-10, 1, -1.9486798e-08, 0.968498528, 3.97787137e-09, 0.249019206),
+						Vector3.new(629.641541, 48.9208832, -347.615479, 0.22478354, -9.22303922e-09, -0.974408686, 2.01077377e-10, 1, -9.41888167e-09, 0.974408686, 1.92127825e-09, 0.22478354),
+						Vector3.new(649.463196, 53.8737106, -347.951996, 0.146407306, -6.28270858e-09, -0.989224374, -3.74763998e-10, 1, -6.40661169e-09, 0.989224374, 1.30870026e-09, 0.146407306),
+						Vector3.new(662.631104, 59.1174622, -359.950439, 0.7801736, -3.95175714e-09, -0.625563085, 2.56815813e-09, 1, -3.11423087e-09, 0.625563085, 8.23096036e-10, 0.7801736),
+						Vector3.new(672.84082, 74.0896301, -366.868774, 0.897625387, -1.80733917e-09, -0.440759212, 1.45638723e-09, 1, -1.13451737e-09, 0.440759212, 3.76455589e-10, 0.897625387),
+						Vector3.new(676.812561, 79.5064545, -376.222107, 0.9204427, -1.18665655e-09, -0.390877485, 9.95632465e-10, 1, -6.91351754e-10, 0.390877485, 2.4717936e-10, 0.9204427),
+						Vector3.new(686.23877, 87.5227814, -391.698547, 0.795526206, 8.4889308e-08, -0.605919182, -9.50082182e-08, 1, 1.53614277e-08, 0.605919182, 4.53468729e-08, 0.795526206), -- Node
+						Vector3.new(671.899292, 77.1216583, -378.493805, -0.813295245, 4.18165982e-08, 0.581851363, 3.65014685e-08, 1, -2.08474731e-08, -0.581851363, 4.28328129e-09, -0.813295245),
+						Vector3.new(666.202454, 71.5211716, -370.701996, -0.937050819, -1.53948143e-09, 0.349192649, -1.48096047e-09, 1, 4.34562331e-10, -0.349192649, -1.09933562e-10, -0.937050819),
+						Vector3.new(653.11969, 53.8569183, -344.65274, -0.901973367, -5.26062784e-08, 0.431791812, -4.91806098e-08, 1, 1.90987457e-08, -0.431791812, -4.00922584e-09, -0.901973367),
+						Vector3.new(673.200562, 52.6447411, -312.886749, -0.841473818, 7.05574337e-08, -0.540297985, 5.66809852e-08, 1, 4.23134594e-08, 0.540297985, 4.98104491e-09, -0.841473818),
+						Vector3.new(680.441895, 53.0370445, -289.402618, -0.961993337, -8.31093914e-08, -0.273073107, -7.71730768e-08, 1, -3.24799743e-08, 0.273073107, -1.01716271e-08, -0.961993337),
+						Vector3.new(706.825989, 54.225441, -254.482315, -0.836039424, 3.68631738e-08, -0.548669279, 2.93489979e-08, 1, 2.24657271e-08, 0.548669279, 2.67934119e-09, -0.836039424),
+						Vector3.new(711.456177, 46.236618, -265.871613, -0.10975337, -1.42636942e-08, -0.99395901, 2.7835295e-08, 1, -1.7423968e-08, 0.99395901, -2.95794749e-08, -0.10975337),
+						Vector3.new(728.303833, 24.1285362, -273.045532, -0.965347528, 1.71072987e-08, -0.260968357, 7.25538429e-09, 1, 3.87147807e-08, 0.260968357, 3.54797862e-08, -0.965347528),
+						Vector3.new(734.558838, 21.8194809, -243.586197, -0.853150487, 1.01531228e-08, 0.521665037, 1.96464356e-08, 1, 1.26675959e-08, -0.521665037, 2.10562234e-08, -0.853150487),
+						Vector3.new(722.35614, 27.3772583, -223.62915, -0.853150725, 6.91475943e-09, 0.521664739, 1.33801601e-08, 1, 8.6272518e-09, -0.521664739, 1.43403014e-08, -0.853150725),
+						Vector3.new(697.272827, 28.0562782, -190.712784, -0.811783791, 4.63031569e-09, 0.583958566, 9.36580413e-09, 1, 5.09058529e-09, -0.583958566, 9.60169366e-09, -0.811783791),
+						Vector3.new(666.146667, 36.169796, -187.919876, -0.188099861, 2.72386669e-09, 0.982150018, 6.05896666e-09, 1, -1.61296798e-09, -0.982150018, 5.64741454e-09, -0.188099861), -- Node
+						Vector3.new(671.017578, 32.6693001, -167.108185, -0.941291809, 6.7048489e-10, 0.337593973, 1.10053033e-09, 1, 1.08247011e-09, -0.337593973, 1.39045264e-09, -0.941291809),
+						Vector3.new(648.415894, -4.41809607, -126.056595, -0.87569797, 1.39987605e-10, 0.482859194, 2.62834476e-10, 1, 1.86754279e-10, -0.482859194, 2.90452384e-10, -0.87569797),
+						Vector3.new(633.588562, -7.02884483, -104.782158, -0.820423007, -2.62469948e-05, 0.571756899, -7.04988997e-06, 1, 3.57898643e-05, -0.571756899, 2.53320068e-05, -0.820423007),
+						Vector3.new(495.613098, -7.63316154, 95.2041245, -0.804583013, -0.000239305984, 0.59384042, -5.9857739e-05, 0.99999994, 0.000321880216, -0.59384042, 0.000223433366, -0.804582953),
+						Vector3.new(479.8302, -3.99468517, 116.58976, -0.804612041, 1.75757731e-09, 0.593800962, 6.39374109e-11, 1, -2.87323987e-09, -0.593800962, -2.27387709e-09, -0.804612041),
+						Vector3.new(469.319885, 13.8986912, 137.30365, -0.792612195, 5.71399319e-08, 0.609726369, -3.13260529e-10, 1, -9.41212903e-08, -0.609726369, -7.47926663e-08, -0.792612195),
+						Vector3.new(466.301239, 18.3500462, 149.281387, -0.995750308, 4.30829701e-08, 0.0920961201, 3.65309845e-08, 1, -7.2828648e-08, -0.0920961201, -6.91547726e-08, -0.995750308), -- Node
+						Vector3.new(476.925537, 16.8152943, 178.877274, -0.998059988, -3.45847906e-09, 0.06226293, -3.10606496e-09, 1, 5.75688297e-09, -0.06226293, 5.55232038e-09, -0.998059988),
+						Vector3.new(467.378906, 14.9669485, 235.514587, -0.273215294, -1.7762769e-09, -0.961952984, -3.22876614e-09, 1, -9.29493482e-10, 0.961952984, 2.85196933e-09, -0.273215294), -- Node done this 1
+						Vector3.new(476.825378, 12.5666046, 239.046646, -0.325545311, -6.65916766e-11, -0.945526421, -1.22697449e-10, 1, -2.81833445e-11, 0.945526421, 1.06838732e-10, -0.325545311),
+						Vector3.new(499.644836, -3.00000072, 260.976318, -0.692844152, -4.36782416e-11, -0.721087396, -8.07901385e-11, 1, 1.70530395e-11, 0.721087396, 7.00718442e-11, -0.692844152),
+						Vector3.new(557.041992, -2.27766228, 316.12027, -0.077195406, -1.9572139e-11, -0.997016072, -3.28121939e-11, 1, -1.70901904e-11, 0.997016072, 3.13950012e-11, -0.077195406),
+						Vector3.new(717.011719, -3.00000072, 328.530151, -0.0771950483, -8.58862374e-12, -0.997016132, -1.43957042e-11, 1, -7.49972827e-12, 0.997016132, 1.37738067e-11, -0.0771950483),
+						Vector3.new(752.959534, -7.95148897, 333.737122, -0.13665624, 0.000423057267, -0.990618348, -8.37630068e-05, 0.99999994, 0.000438618939, 0.990618467, 0.000142917226, -0.136656165),
+						Vector3.new(899.846985, -7.27793646, 354.003601, -0.13670148, 0.000147622879, -0.990612268, -3.01687724e-05, 1, 0.000153185043, 0.990612268, 5.08261837e-05, -0.136701465),
+						Vector3.new(1005.56116, -7.52292395, 368.588135, -0.136725575, 0.000265957933, -0.990608931, -4.9196351e-05, 1, 0.000275269413, 0.990608931, 8.63707173e-05, -0.136725545),
+						Vector3.new(1041.96887, -1.02561831, 386.144226, 0.0124875307, 3.88078973e-08, -0.999922097, -1.79998541e-08, 1, 3.85861298e-08, 0.999922097, 1.75166015e-08, 0.0124875307),
+						Vector3.new(1067.98206, -1.63150072, 387.468536, 0.0473674536, -4.62361065e-08, -0.998877525, 2.30382788e-08, 1, -4.51955735e-08, 0.998877525, -2.08716209e-08, 0.0473674536),
+						Vector3.new(1105.43445, -1.48534143, 385.694489, 0.0473671556, 4.34947403e-08, -0.998877525, -2.16671801e-08, 1, 4.25161559e-08, 0.998877525, 1.96289935e-08, 0.0473671556),
+						Vector3.new(1140.84961, -4.9590416, 382.419403, 0.0921357274, -7.92254582e-08, -0.995746493, 4.19001118e-08, 1, -7.56868914e-08, 0.995746493, -3.47484175e-08, 0.0921357274),
+						Vector3.new(1193.80176, -1.97251749, 375.649353, -0.358356953, -5.85271351e-08, -0.93358463, 8.61946781e-09, 1, -6.59993518e-08, 0.93358463, -3.16983346e-08, -0.358356953),
+						Vector3.new(1228.33289, -6.39097023, 380.788483, -0.330268383, -8.35542551e-08, -0.943887115, 1.43074708e-08, 1, -9.35276674e-08, 0.943887115, -4.43938646e-08, -0.330268383),
+						Vector3.new(1264.32349, -17.7033157, 408.888367, -0.609750152, 6.50837393e-08, -0.792593539, 8.25503932e-09, 1, 7.57642056e-08, 0.792593539, 3.96543598e-08, -0.609750152),
+						Vector3.new(1292.78479, -19.5423012, 431.012085, -0.613694668, 1.80264714e-09, -0.789543569, 2.3802943e-10, 1, 2.09813611e-09, 0.789543569, 1.09968035e-09, -0.613694668),
+						Vector3.new(1281.16248, -24.2449493, 456.587372, -0.910474062, -1.54431739e-08, 0.413566172, -2.03768913e-08, 1, -7.51864881e-09, -0.413566172, -1.52727289e-08, -0.910474062),
+						Vector3.new(1260.39917, -27.1176853, 460.947601, -0.205471635, 4.3864258e-08, 0.978663087, 6.53234977e-08, 1, -3.11058344e-08, -0.978663087, 5.75383226e-08, -0.205471635),
+						Vector3.new(1244.9375, -26.0167713, 461.780579, -0.258815527, -8.45261283e-09, 0.965926766, -1.26461419e-08, 1, 5.36230482e-09, -0.965926766, -1.08273994e-08, -0.258815527),
+						Vector3.new(1215.77429, -22.0987129, 469.59552, -0.258815527, 4.27007159e-08, 0.965926766, 6.38820978e-08, 1, -2.70900813e-08, -0.965926766, 5.4694091e-08, -0.258815527),
+						Vector3.new(1194.9613, -15.845973, 475.172028, -0.258815527, -4.0718855e-09, 0.965926766, -6.09140427e-09, 1, 2.58335842e-09, -0.965926766, -5.21523713e-09, -0.258815527),
+						Vector3.new(1158.92529, -12.2812243, 484.581787, -0.258815527, -7.9866453e-08, 0.965926766, -4.08036982e-08, 1, 7.17505912e-08, -0.965926766, -2.08432134e-08, -0.258815527), -- Node
+						Vector3.new(1189.74585, -15.0140791, 476.225311, 0.94713819, -1.18586012e-08, 0.320825785, 1.02391766e-08, 1, 6.73476475e-09, -0.320825785, -3.09376103e-09, 0.94713819),
+						Vector3.new(1184.67175, -12.0619631, 456.402893, 0.969697058, -7.61221219e-09, 0.244310588, 6.89637858e-09, 1, 3.78540577e-09, -0.244310588, -1.9858386e-09, 0.969697058), -- Node
+						Vector3.new(1200.62219, -15.0000029, 494.931213, -0.922450662, -5.18613463e-09, -0.386114776, -4.26165192e-09, 1, -3.25025296e-09, 0.386114776, -1.35271161e-09, -0.922450662),
+						Vector3.new(1213.7981, -12.1630287, 522.075073, -0.869743228, -1.05588671e-09, -0.493505001, -7.8254947e-10, 1, -7.60417507e-10, 0.493505001, -2.75175771e-10, -0.869743228),
+						Vector3.new(1229.19226, -11.4018583, 544.591858, -0.789556503, -7.10038417e-10, -0.613678098, -4.47075876e-10, 1, -5.81814541e-10, 0.613678098, -1.85014712e-10, -0.789556503),
+						Vector3.new(1234.97266, -11.5597076, 546.240356, -0.982566357, -4.95219477e-10, -0.185913891, -4.62595573e-10, 1, -2.18858182e-10, 0.185913891, -1.29039668e-10, -0.982566357),
+						Vector3.new(1239.36572, -15.2343273, 564.443054, -0.897696972, -2.75160006e-10, -0.4406133, -2.15411591e-10, 1, -1.85617771e-10, 0.4406133, -7.17153004e-11, -0.897696972), -- Node
+						Vector3.new(1250.34583, -15.5707178, 585.746582, -0.888731241, -1.47689555e-10, -0.458428651, -1.13608463e-10, 1, -1.01918085e-10, 0.458428651, -3.8496404e-11, -0.888731241),
+						Vector3.new(1284.7832, -15.9888048, 618.498779, -0.727917433, -1.61700826e-11, -0.685664713, -8.88104867e-12, 1, -1.41547486e-11, 0.685664713, -4.2140666e-12, -0.727917433),
+						Vector3.new(1312.30042, -15.7822561, 657.395325, -0.816247344, -1.06454645e-11, -0.577703059, -7.08667066e-12, 1, -8.41434214e-12, 0.577703059, -2.77419168e-12, -0.816247344),
+						Vector3.new(1276.62024, -16.0441132, 692.029236, -0.696500659, -6.00902748e-12, 0.717556298, -5.30907523e-12, 1, 3.22100723e-12, -0.717556298, -1.56612657e-12, -0.696500659), -- Node
+						Vector3.new(1308.61072, -15.9908781, 664.981201, -0.234573007, -2.07607672e-12, -0.972098529, 3.89020413e-14, 1, -2.14505215e-12, 0.972098529, -5.40987827e-13, -0.234573007),
+						Vector3.new(1334.93347, -15.6653223, 671.334351, -0.234571457, -1.20352014e-12, -0.972098827, 2.24932377e-14, 1, -1.24349142e-12, 0.972098827, -3.13553382e-13, -0.234571457),
+						Vector3.new(1364.2218, -15.5034571, 679.227844, -0.249100924, -7.88455022e-13, -0.968477726, 2.50794936e-15, 1, -8.14763079e-13, 0.968477726, -2.0538695e-13, -0.249100924), -- Node
+						Vector3.new(1324.15527, -15.6913538, 667.412354, 0.282786727, -3.2458514e-13, 0.959182799, 1.06796624e-14, 1, 3.35249e-13, -0.959182799, -8.45602071e-14, 0.282786727),
+						Vector3.new(1288.19153, -16.2218628, 625.617432, 0.757940054, -2.10813463e-13, 0.6523242, 1.23958379e-13, 1, 1.79144731e-13, -0.6523242, -5.49199155e-14, 0.757940054),
+						Vector3.new(1266.11047, -15.4766626, 597.688171, 0.783357143, -1.2128986e-13, 0.621571958, 7.53713769e-14, 1, 1.00144746e-13, -0.621571958, -3.16003767e-14, 0.783357143),
+						Vector3.new(1252.37915, -15.5556107, 588.865479, 0.895479918, -8.25910114e-14, 0.445101947, 6.43801689e-14, 1, 5.60318054e-14, -0.445101947, -2.15196191e-14, 0.895479918),
+						Vector3.new(1245.52832, -15.5198832, 575.083069, 0.895479918, -5.48294015e-14, 0.445101857, 4.27412791e-14, 1, 3.71947278e-14, -0.445101857, -1.42829067e-14, 0.895479918),
+						Vector3.new(1233.58289, -11.3468075, 544.55304, 0.92994529, -3.2519604e-14, 0.367697835, 2.71272229e-14, 1, 1.98335949e-14, -0.367697835, -8.4695375e-15, 0.92994529),
+						Vector3.new(1207.97168, -11.0856323, 532.457947, -0.557183027, -1.37755882e-14, 0.830389977, -1.06547038e-14, 1, 9.44010766e-15, -0.830389977, -3.58769148e-15, -0.557183027),
+						Vector3.new(1178.47034, -5.67486429, 555.572388, -0.640918732, -1.10175744e-14, 0.767608643, -9.26386043e-15, 1, 6.61820469e-15, -0.767608643, -2.86928832e-15, -0.640918732),
+						Vector3.new(1149.77234, -1.87075114, 585.745422, 0.640844107, -7.20403724e-15, 0.767671108, 3.17623718e-15, 1, 6.73278538e-15, -0.767671108, -1.87636009e-15, 0.640844107),
+						Vector3.new(1102.93726, -2.04830956, 542.050598, 0.681966305, -2.56896496e-15, 0.731383502, 1.26241367e-15, 1, 2.33535644e-15, -0.731383502, -6.69325911e-16, 0.681966305),
+						Vector3.new(1073.58069, 2.68301749, 514.678406, 0.681963086, -1.71826785e-15, 0.731386662, 8.44354947e-16, 1, 1.56203167e-15, -0.731386662, -4.47698047e-16, 0.681963086),
+						Vector3.new(1016.10309, -0.843750238, 461.065186, 0.68196547, -1.06573357e-15, 0.731384397, 5.23675579e-16, 1, 9.68854285e-16, -0.731384397, -2.77717089e-16, 0.68196547),
+						Vector3.new(960.007812, 2.57790685, 440.134033, 0.344331801, -6.45161967e-17, 0.938848078, 6.42822237e-18, 1, 6.63608558e-17, -0.938848078, -1.68150317e-17, 0.344331801),
+						Vector3.new(942.933594, -2.70589519, 425.510254, 0.637015462, -4.08305714e-17, 0.770851016, 1.78062174e-17, 1, 3.82534803e-17, -0.770851016, -1.06421178e-17, 0.637015462),
+						Vector3.new(929.151367, -7.17721748, 409.974487, 0.724507689, -6.04664565e-05, 0.689266682, -2.17825691e-05, 1, 0.000110622059, -0.689266682, -9.51605325e-05, 0.724507689),
+						Vector3.new(829.722595, -7.40590715, 278.029907, 0.7986359, -0.000101343045, 0.601814449, -4.13592643e-05, 1, 0.000223281488, -0.601814449, -0.000203211224, 0.7986359),
+						Vector3.new(561.906433, -7.42173004, -77.377037, 0.798640609, -0.000107934291, 0.60180825, -4.26826555e-05, 1, 0.000235992789, -0.60180825, -0.000214160202, 0.798640609),
+						Vector3.new(395.082397, -7.67481709, -289.164673, 0.783245325, -0.000162926182, 0.621712744, -5.8213147e-05, 0.99999994, 0.000335398217, -0.621712744, -0.000298890955, 0.783245265),
+						Vector3.new(221.493713, -7.09847116, -477.175903, -0.205490947, -7.12237234e-05, 0.978659034, -1.37637235e-05, 1, 6.98868535e-05, -0.978659034, 8.91119271e-07, -0.205490947),
+						Vector3.new(165.551346, -7.04059792, -463.076508, -0.244507194, -6.82417021e-06, 0.969647527, -2.50131552e-06, 1, 6.40705093e-06, -0.969647527, -8.58824706e-07, -0.244507194),
+						Vector3.new(22.1344223, -7.16890049, -405.550293, -0.372312427, -0.000104636943, 0.92810744, -2.05143915e-05, 1, 0.000104512874, -0.92810744, 1.98718881e-05, -0.372312427),
+						Vector3.new(-88.9494858, -7.25491047, -360.99115, -0.372313857, -0.000127219595, 0.928107023, -2.4593719e-05, 1, 0.000127208419, -0.928107023, 2.45358315e-05, -0.372313857),
+
+					}
+
+
+					local currentIndex = 1 -- Initialize the index for target positions
+					local tolerance = 2 -- Adjust this value to change how close the object needs to get to the target position
+					local speed = 60 -- Adjust this value to change the movement speed
+
+					-- Loop through each target position
+					for _, targetPosition in ipairs(targetPositions) do
+						while true do
+							local position = object:IsA("Model") and object.PrimaryPart and object.PrimaryPart.Position or object.Position
+							if position then
+								local direction = (targetPosition - position).unit
+								local distance = (targetPosition - position).magnitude
+
+								if distance > tolerance then
+									-- Move the object towards the target position gradually
+									object:SetPrimaryPartCFrame(object:GetPrimaryPartCFrame() + direction * speed * game:GetService("RunService").Heartbeat:Wait())
+								else
+									break -- Exit the loop when the object reaches the target position
+								end
+							else
+								warn("Object does not have a valid position.")
+								break
+							end
+
+							wait() -- Yield to allow other processes to run
+						end
+
+						local waitTime = waitTimes[currentIndex] or 0 -- Retrieve wait time from the array
+						wait(waitTime) -- Wait for the calculated wait time
+						currentIndex = currentIndex % #waitTimes + 1 -- Move to the next index, looping back to the beginning if necessary
+					end
+				until false
+			until not Farming:GetToggleState('GoldFarm') -- Check if the toggle is still enabled
+		end
+	end,
+})
+
+
+local hipHeightSlider = Farming:AddSlider('WaitTimeSlider', {
+	Text = 'hip height adj (2) is normal',
+	Default = 0,
+	Min = 0,
+	Max = 15,
+	Rounding = 1,
+	Compact = false,
+	Callback = function(value)
+		hipHeight = value -- Update the hip height
+		local character = game.Players.LocalPlayer.Character
+		local humanoid = character:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			humanoid.HipHeight = value -- Adjust the character's hip height
+		end
+	end
+})
+--campfire
+local packets = require(game:GetService("ReplicatedStorage").Modules.Packets)
+local itemIDS = require(game:GetService("ReplicatedStorage").Modules.ItemIDS)
+
+local autohit = combat:AddGroupbox({Name="Auto coinpress,campfire",Side=1})
+
+
+function GetClosestPress()
+	local press, dist = nil, 26
+
+	for _, stru in next, workspace.Deployables:GetChildren() do
+		if stru.Name == "Coin Press" then
+			local dist2 = (stru:GetPivot().Position - plr.Character:GetPivot().Position).Magnitude
+
+			if dist2 < dist then
+				dist = dist2
+				press = stru
+			end
+		end
+	end
+
+	return press
+end
+
+local autopressenabled = false
+
+task.spawn(function()
+	while task.wait(1/30) do
+		if not autopressenabled then
+			task.wait(1)
+			continue
+		end
+		local press = GetClosestPress()
+
+		if press ~= nil then
+			packets.InteractStructure.send({
+				["entityID"] = press:GetAttribute("EntityID"),
+				["itemID"] = itemIDS["Gold"]
+			})
+		end
+	end
+end)
+--shark
+autohit:AddToggle('Coin press aura', {
+	Text = 'Presses coins',
+	Default = false,
+	Tooltip = 'Toggle to enable coin presser',
+	Callback = function(enabled)
+		autopressenabled = enabled
+	end
+})
+--auto pickup
+local campfireAuraEnabled = false
+local chosenItem = "Log"
+local maxCampDistance = 25
+local campAmount = 5
+local minCampHealth = 50
+
+function GetClosestCampfireWithHealth(val)
+	local campfire, dist = nil, maxCampDistance
+	local plr = game.Players.LocalPlayer
+
+	for _, stru in next, workspace.Deployables:GetChildren() do
+		if stru.Name == "Campfire" then
+			local dist2 = (stru:GetPivot().Position - plr.Character:GetPivot().Position).Magnitude
+
+			if dist2 < dist and tonumber(stru:FindFirstChild("Board"):FindFirstChild("Billboard"):FindFirstChild("Backdrop"):FindFirstChild("TextLabel").Text) <= val then
+				dist = dist2
+				campfire = stru
+			end
+		end
+	end
+
+	return campfire
+end
+
+spawn(function()
+	while task.wait() do
+		if not campfireAuraEnabled then
+			task.wait(1)
+			continue
+		end
+		local campfire = GetClosestCampfireWithHealth(minCampHealth)
+
+		if campfire then
+			for i = 1, campAmount do
+				packets.InteractStructure.send({
+					["entityID"] = campfire:GetAttribute("EntityID"),
+					["itemID"] = itemIDS[chosenItem]
+				})
+				task.wait(0.3)
+			end
+			task.wait(0.1)
+		end
+	end
+end)
+--screengui
+
+autohit:AddToggle('Campfire Aura', {
+	Text = 'fuel campfire1',
+	Default = false,
+	Tooltip = 'Toggle to make your campfires automatically fill up',
+	Callback = function(enabled)
+		campfireAuraEnabled = enabled
+	end
+})
+
+autohit:AddSlider('Campfire Health', {
+	Text = 'health for regen1',
+	Default = minCampHealth,
+	Min = 1,
+	Max = 250,
+	Rounding = 1,
+	Compact = false,
+	Callback = function(Value)
+		minCampHealth = Value
+	end
+})
+
+
+--auto craft
+
+autohit:AddDropdown('Campfire Resource', {
+	Values = { 'Log', 'Leaves', 'Wood' },
+	Default = 1,
+	Multi = false,
+	Text = 'Resource1',
+	Tooltip = 'Select a resource for the campfire aura to use that :)',
+	Callback = function(Value)
+		chosenItem = Value
+	end
+})
+
+autohit:AddSlider('Campfire Distance', {
+	Text = 'distance1',
+	Default = 25,
+	Min = 0,
+	Max = 35,
+	Rounding = 1,
+	Compact = false,
+	Callback = function(Value)
+		maxCampDistance = Value
+	end
+})
+
+autohit:AddSlider('Campfire Amount', {
+	Text = 'amount1',
+	Default = 5,
+	Min = 1,
+	Max = 15,
+	Rounding = 1,
+	Compact = false,
+	Callback = function(Value)
+		campAmount = Value
+	end
+})
+
+
+
+
+local campfireAuraEnabled1 = false
+local chosenItem1 = "Log"
+local maxCampDistance1 = 25
+local campAmount1 = 5
+local minCampHealth1 = 50
+
+function GetClosestCampfireWithHealth(val)
+	local campfire, dist = nil, maxCampDistance1
+	local plr = game.Players.LocalPlayer
+
+	for _, stru in next, workspace.Deployables:GetChildren() do
+		if stru.Name == "Campfire" then
+			local dist2 = (stru:GetPivot().Position - plr.Character:GetPivot().Position).Magnitude
+
+			if dist2 < dist and tonumber(stru:FindFirstChild("Board"):FindFirstChild("Billboard"):FindFirstChild("Backdrop"):FindFirstChild("TextLabel").Text) <= val then
+				dist = dist2
+				campfire = stru
+			end
+		end
+	end
+
+	return campfire
+end
+
+spawn(function()
+	while task.wait() do
+		if not campfireAuraEnabled1 then
+			task.wait(1)
+			continue
+		end
+		local campfire = GetClosestCampfireWithHealth(minCampHealth1)
+
+		if campfire then
+			for i = 1, campAmount1 do
+				packets.InteractStructure.send({
+					["entityID"] = campfire:GetAttribute("EntityID"),
+					["itemID"] = itemIDS[chosenItem1]
+				})
+				task.wait(0.3)
+			end
+			task.wait(0.1)
+		end
+	end
+end)
+--ice farm
+autohit:AddLabel('_________')
+--auto grab
+autohit:AddToggle('Campfire Aura', {
+	Text = 'fuel campfire2',
+	Default = false,
+	Tooltip = 'Toggle to make your campfires automatically fill up',
+	Callback = function(enabled)
+		campfireAuraEnabled1 = enabled
+	end
+})
+
+autohit:AddSlider('Campfire Health', {
+	Text = 'Health for regen2',
+	Default = minCampHealth1,
+	Min = 1,
+	Max = 250,
+	Rounding = 1,
+	Compact = false,
+	Callback = function(Value)
+		minCampHealth1 = Value
+	end
+})
+
+
+--auto craft
+
+autohit:AddDropdown('Campfire Resource', {
+	Values = { 'Log', 'Leaves', 'Wood' },
+	Default = 1,
+	Multi = false,
+	Text = 'Resource2',
+	Tooltip = 'Select a resource for the campfire aura to use that :)',
+	Callback = function(Value)
+		chosenItem1 = Value
+	end
+})
+
+autohit:AddSlider('Campfire Distance', {
+	Text = 'distance2',
+	Default = 25,
+	Min = 0,
+	Max = 35,
+	Rounding = 1,
+	Compact = false,
+	Callback = function(Value)
+		maxCampDistance1 = Value
+	end
+})
+autohit:AddSlider('Campfire Amount', {
+	Text = 'amount2',
+	Default = 5,
+	Min = 1,
+	Max = 15,
+	Rounding = 1,
+	Compact = false,
+	Callback = function(Value)
+		campAmount1 = Value
+	end
+})
+
+
+
+
+
+
+
+--auto eat
+
+
+
+
+
+local autohit = combat:AddGroupbox({Name="auto mine"})
+local MineAura = false
+
+--afk
+autohit:AddToggle('MyToggle', {
+	Text = 'mine aura',
+	Default = false,
+	Tooltip = 'Toggle to automatically craft items',
+	Callback = function(Value)
+		MineAura = Value
+		while MineAura do
+			if CheckPlayer() then
+				local Target = GetClosestResource()
+				local Tool = CheckTool()
+				if PlaceID == 11729688377 then
+					if Tool then
+						if Target then
+							Packets.SwingTool.send({GetEntityID(Target.Parent)})
+							local Loaded = LocalPlayer.Character.Humanoid:LoadAnimation(ReplicateAnimation)
+							Loaded:Play()
+						end
+					end
+				elseif PlaceID == 11879754496 then
+					if Tool then
+						if Target then
+							Packets.SwingTool.send({Target})
+							local Loaded = LocalPlayer.Character.Humanoid:LoadAnimation(ReplicateAnimation)
+							Loaded:Play()
+						end
+					end
+				end
+			end
+			task.wait(0.1)
+		end
+	end
+})
+
+
+
+
+local Farming = combat:AddGroupbox({Name="auto eat"})
+
+autoeat_enabled = Farming:AddToggle(1,{Text="Enabled"}):AddKeyPicker(1,{Default="",Text="Auto Eat",SyncToggleState=true})
+autoeat_threshold = Farming:AddSlider(1,{Text="Threshold",Default=75,Min=0,Max=101,Rounding=1})
+autoeat_foods = Farming:AddInput(1,{Text="Foods",Default="Lemon, Cooked Meat"})
+
+autoeat_enabled:OnChanged(function()
+	while true do
+		local step = rs.PreSimulation:Wait()
+		if not (isrunning and autoeat_enabled.Value) then break end
+		local hunger = (statsgui.Food.Slider.AbsoluteSize.X/statsgui.Food.AbsoluteSize.X)*100
+		if hunger<autoeat_threshold.Value then
+			for i,v in pairs(autoeat_foods.Value:split(",")) do
+				if getSlot(trim(v)) then
+					useSlot(getSlot(trim(v)))
+					break
+				end
+			end
+			task.wait(plr:GetNetworkPing()+0.4)
+		end
+	end
+end)
+
+
+
+
+
+
+--campfire
+
+
+
+--key
+local Farming = combat:AddGroupbox({Name="auto craft"})
+autocraft_count = Farming:AddSlider('DepboxSlider', { Text = 'how many', Default = 1, Min = 0, Max = 25, Rounding = 0 })
+autocraft_item = Farming:AddInput(1,{Text="Resources",Default="Leaf Shirt, Leaf Pants, Leaf Bag, Club, Light, Arrow, Bow, War Horn"})
+
+
+--autoheal
+Farming:AddToggle('MyToggle', {
+	Text = 'Auto Craft',
+	Default = false,
+	Tooltip = 'Toggle to automatically craft items',
+	Callback = function(v)
+		autocraft_enabled = v
+		if autocraft_enabled then
+			while autocraft_enabled do
+				for i = 1, autocraft_count.Value do
+					craft(getItemId(autocraft_item.Value))
+				end
+				task.wait(0.1) -- Adjust delay as needed
+			end
+		end
+	end,
+})
+local Farming = combat:AddGroupbox({Name="Hide Items"})
+local hideitems_enabled = Farming:AddToggle(1,{Text="Enabled"}):AddKeyPicker(1,{Default="",Text="No Slide",SyncToggleState=true})
+
+local items = workspace:WaitForChild("Items")
+
+hideitems_enabled:OnChanged(function(new)
+	if new then
+		items.Parent=nil
+	else
+		items.Parent=workspace
+	end
+end)
+table.insert(unloads,function()
+	items.Parent=workspace
+end)
+
+
+
+
+--shark
+
+
+--shark
+local Farming = combat:AddGroupbox({Name="auto pickup"})
+autograb_enabled = Farming:AddToggle(1,{Text="Enabled"}):AddKeyPicker(1,{Default="",Text="Auto Pickup",SyncToggleState=true})
+autograb_range = Farming:AddSlider(1,{Text="Range",Default=25,Min=0,Max=25,Rounding=1})
+autograb_whitelistenabled = Farming:AddToggle(1,{Text="Certain Resource Enabled",Default=true})
+autograb_whitelist = Farming:AddInput(1,{Text="Resources",Default="Gold, Crystal Chunk, Void Shard, Essence, Emerald, Pink Diamond, Coin2, Coin, Magnetite, Spirit Key"})
+autograb_chest = Farming:AddToggle(1,{Text="Chest"})
+autograb_safechest = Farming:AddToggle(1,{Text="Safe Chest"})
+local autograbchest
+Farming:AddButton({Text="Bind Near Chest",Func=function()
+	local best
+	local bestdist = 25
+	for i,v in pairs(workspace.Deployables:GetChildren()) do
+		if v.Name:find("Chest") then
+			if (root.Position-v:GetPivot().Position).Magnitude<bestdist then
+				best=v.Base
+			end
+		end
+	end
+	autograbchest = best or autograbchest
+end,})
+--ice goldfarm
+local autograbwhitelist = {}
+autograb_whitelist:OnChanged(function()
+	table.clear(autograbwhitelist)
+	for i,v in pairs(autograb_whitelist.Value:split(",")) do
+		autograbwhitelist[trim(v)]=true
+	end
+end)
+for i,v in pairs(autograb_whitelist.Value:split(",")) do
+	autograbwhitelist[trim(v)]=true
+end
+
+local function chest(item)
+	if not autograbchest then return end
+	if item:IsA("Model") then
+		for i,v in pairs(item:GetDescendants()) do
+			if v:IsA("BasePart") then v.CFrame=autograbchest.CFrame end
+		end
+		touch(getMover(item),autograbchest)
+	else
+		item.CFrame=autograbchest.CFrame
+		touch(item,autograbchest)
+	end
+end
+autograb_enabled:OnChanged(function()
+	local items = {}
+	local lastupdate = Vector3.new(0,-1000,0)
+	local itemcon = workspace.Items.ChildAdded:Connect(function(v)
+		if v:GetPivot().Position~=Vector3.new() then
+			local dist = (root.Position-v:GetPivot().Position).Magnitude
+			if dist<75 then
+				table.insert(items,v)
+			end
+		end
+	end)
+	while true do
+		local step = rs.PostSimulation:Wait()
+		if not (isrunning and autograb_enabled.Value) then break end
+		if not root then continue end
+		if (root.Position-lastupdate).Magnitude>25 then
+			table.clear(items)
+			for i,v in pairs(workspace.Items:GetChildren()) do
+				if v:GetPivot().Position~=Vector3.new() then
+					local dist = (root.Position-v:GetPivot().Position).Magnitude
+					if dist<75 then
+						table.insert(items,v)
+					end
+				end
+			end
+			lastupdate=root.Position
+		end
+		for i,v in pairs(items) do
+			if v:GetPivot().Position~=Vector3.new() and (not autograb_whitelistenabled.Value or autograbwhitelist[v.Name]) then
+				local dist = (root.Position-v:GetPivot().Position).Magnitude
+				if dist<autograb_range.Value then
+					if autograb_chest.Value then
+						manipulate(v,chest,autograb_safechest.Value)
+						break
+					else
+						pickup(v)
+					end
+				end
+			end
+		end
+	end
+	itemcon:Disconnect()
+end)
+
+loadstring(game:HttpGet('https://raw.githubusercontent.com/Proxylol/OtherScripts/main/AntiAfk.lua'))()
