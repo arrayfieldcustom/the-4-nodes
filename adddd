@@ -1179,7 +1179,7 @@ autohit:AddToggle('MyToggle', {
 		MineAura = Value
 		while MineAura do
 			if CheckPlayer() then
-				local Target = GetClosestResource()
+				local Target = TargetItem()
 				local Tool = CheckTool()
 				if PlaceID == 11729688377 then
 					if Tool then
