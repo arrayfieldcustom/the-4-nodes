@@ -282,7 +282,6 @@ local function startWalking()
 
 			for _, position in ipairs(positionsToTween) do
 				walkTo(position.Position)
-				print("ah yes daddy")
 
 			end
 
@@ -292,6 +291,8 @@ local function startWalking()
 				local rotationOffset = CFrame.Angles(0, offsetAngle, 0)
 				local chestPosition = chestCFrame.Position + rotationOffset:VectorToWorldSpace(offsetVector)
 				walkTo(chestPosition)
+				task.wait(0.1)
+				print("ah yes daddy")
 			end
 
 			wait(1) -- Wait for a moment before restarting the sequence
