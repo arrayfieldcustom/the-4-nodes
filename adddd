@@ -239,7 +239,7 @@ end
 
 
 
---auto eat
+
 local function walkTo(position)
 	if not humanoidRootPart or not chestModel then
 		return
@@ -282,6 +282,9 @@ local function startWalking()
 
 			for _, position in ipairs(positionsToTween) do
 				walkTo(position.Position)
+				tween.Completed:Wait()
+				print("ah yes daddy")
+
 			end
 
 			if chestModel then
