@@ -282,7 +282,6 @@ local function startWalking()
 
 			for _, position in ipairs(positionsToTween) do
 				walkTo(position.Position)
-				tween.Completed:Wait()
 				print("ah yes daddy")
 
 			end
